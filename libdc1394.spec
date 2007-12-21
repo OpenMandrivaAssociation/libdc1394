@@ -14,6 +14,7 @@ Patch0:		libdc1394-0.9.5-lib64.patch
 Patch1:		libdc1394-1.2.1-clk_tck-deprecated.patch
 BuildRequires: 	libraw1394-devel X11-devel
 Requires: 	libraw1394 kernel >= 2.4.2
+Buildroot: 	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 %description
 libdc1394 is a library that is intended to provide a high level programming
