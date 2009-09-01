@@ -5,7 +5,7 @@
 Summary: 	Library for 1394 Digital Camera Specification
 Name: 		libdc1394
 Version: 	2.0.3
-Release: 	%mkrel 2
+Release: 	%mkrel 3
 License: 	GPLv2+
 Group: 		System/Libraries
 URL: 		http://sourceforge.net/projects/libdc1394/
