@@ -5,7 +5,7 @@
 Summary: 	Library for 1394 Digital Camera Specification
 Name: 		libdc1394
 Version: 	2.1.2
-Release: 	%mkrel 1
+Release: 	%mkrel 2
 License: 	GPLv2+
 Group: 		System/Libraries
 URL: 		http://sourceforge.net/projects/libdc1394/
@@ -40,8 +40,6 @@ Requires: 	%{libname} = %{version}-%{release}
 Provides: 	libdc1394-devel = %{version}-%{release}
 %endif
 Provides: 	dc1394-devel = %{version}-%{release}
-Provides: 	%{mklibname dc1394_ 12 -d} = %{version}
-Obsoletes:	%{mklibname dc1394_ 12 -d}
 
 %description -n %{develname}
 libdc1394 is a library that is intended to provide a high level programming
