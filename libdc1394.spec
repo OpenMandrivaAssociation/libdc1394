@@ -4,14 +4,12 @@
 
 Summary: 	Library for 1394 Digital Camera Specification
 Name: 		libdc1394
-Version: 	2.0.3
-Release: 	%mkrel 3
+Version: 	2.1.2
+Release: 	%mkrel 1
 License: 	GPLv2+
 Group: 		System/Libraries
 URL: 		http://sourceforge.net/projects/libdc1394/
-Source0: 	%{name}-%{version}.tar.gz
-#Patch0:		libdc1394-0.9.5-lib64.patch
-#Patch1:		libdc1394-1.2.1-clk_tck-deprecated.patch
+Source0: 	http://downloads.sourceforge.net/project/%name/%name-2/%version/%{name}-%{version}.tar.gz
 BuildRequires: 	libraw1394-devel X11-devel
 Requires: 	libraw1394 kernel >= 2.4.2
 Buildroot: 	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
@@ -54,15 +52,10 @@ This archive contains the header-files for libdc1394 development
 
 %prep
 %setup -q 
-#%patch0 -p1 -b .lib64
-#%patch1 -p1 -b .clk_tck
-#export WANT_AUTOCONF_2_1=1
-#autoreconf
-#aclocal
 
 %build
 %configure2_5x
-%make
+%make LIBS=-pthread
 
 %install
 rm -rf %{buildroot}
