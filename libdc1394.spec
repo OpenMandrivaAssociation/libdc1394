@@ -10,6 +10,7 @@ License: 	GPLv2+
 Group: 		System/Libraries
 URL: 		http://sourceforge.net/projects/libdc1394/
 Source0: 	http://downloads.sourceforge.net/project/%name/%name-2/%version/%{name}-%{version}.tar.gz
+Patch: libdc1394-2.1.2-fix-linking.patch
 BuildRequires: 	libraw1394-devel X11-devel
 Requires: 	libraw1394 kernel >= 2.4.2
 Buildroot: 	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
@@ -52,10 +53,12 @@ This archive contains the header-files for libdc1394 development
 
 %prep
 %setup -q 
+%patch -p1
+autoreconf -fi
 
 %build
 %configure2_5x
-%make LIBS=-pthread
+%make
 
 %install
 rm -rf %{buildroot}
