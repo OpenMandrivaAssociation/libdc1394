@@ -5,7 +5,7 @@
 Summary: 	Library for 1394 Digital Camera Specification
 Name: 		libdc1394
 Version: 	2.1.2
-Release: 	%mkrel 5
+Release: 	%mkrel 6
 License: 	GPLv2+
 Group: 		System/Libraries
 URL: 		http://sourceforge.net/projects/libdc1394/
@@ -51,17 +51,16 @@ This archive contains the header-files for libdc1394 development
 
 %prep
 %setup -q 
-%patch -p1
-autoreconf -fi
+%patch -p1 -b .link
 
 %build
+autoreconf -fi
 %configure2_5x
 %make
 
 %install
 rm -rf %{buildroot}
-
-%makeinstall
+%makeinstall_std
 
 %if %mdkversion < 200900
 %post -n %{libname} -p /sbin/ldconfig
