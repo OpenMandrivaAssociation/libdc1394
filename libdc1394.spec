@@ -10,9 +10,11 @@ License: 	GPLv2+
 Group: 		System/Libraries
 URL: 		http://sourceforge.net/projects/libdc1394/
 Source0: 	http://downloads.sourceforge.net/project/%name/%name-2/%version/%{name}-%{version}.tar.gz
-Patch: libdc1394-2.1.2-fix-linking.patch
+Patch0: libdc1394-2.1.2-fix-linking.patch
+Patch1: libdc1394-2.1.2-videodev.h.patch
 BuildRequires: 	libraw1394-devel usb1-devel
 Requires: 	libraw1394 kernel >= 2.4.2
+BuildRequires:	libv4l-devel
 Buildroot: 	%{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 %description
@@ -51,7 +53,8 @@ This archive contains the header-files for libdc1394 development
 
 %prep
 %setup -q 
-%patch -p1 -b .link
+%patch0 -p1 -b .link
+%patch1 -p0 -b .v4l
 
 %build
 autoreconf -fi
