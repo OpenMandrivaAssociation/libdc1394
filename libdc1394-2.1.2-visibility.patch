@@ -1,0 +1,2775 @@
+diff --git a/libdc1394/configure.in b/libdc1394/configure.in
+index bdddc9b..5325383 100644
+--- a/libdc1394/configure.in
++++ b/libdc1394/configure.in
+@@ -110,6 +110,23 @@ AC_TYPE_SIZE_T
+ 
+ AC_FUNC_MMAP
+ 
++dnl Check for -fvisibility=hidden, when using gcc
++AC_CACHE_CHECK([whether -fvisibility=hidden is supported],[dt_visibility_hidden],
++	       [dt_visibility_hidden=no
++		if test "x$GCC" == "xyes"
++		then
++			AC_LANG(C)
++			AC_LANG_CONFTEST([AC_LANG_PROGRAM([[]],[[]])])
++			if $CC $CPPFLAGS $CFLAGS -fvisibility=hidden conftest.c
++			then
++				dt_visibility_hidden=yes
++			fi
++		fi])
++if test "$dt_visibility_hidden" == "yes"
++then
++	CFLAGS="$CFLAGS -fvisibility=hidden"
++fi
++
+ dnl ---------------------------------------------------------------------------
+ dnl When making a release:
+ dnl  1. If the library source code has changed at all since the last release,
+diff --git a/libdc1394/dc1394/bayer.c b/libdc1394/dc1394/bayer.c
+index d570fe0..d6412f4 100644
+--- a/libdc1394/dc1394/bayer.c
++++ b/libdc1394/dc1394/bayer.c
+@@ -26,6 +26,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include "conversions.h"
++#include "visibility.h"
+ 
+ #define CLIP(in, out)\
+    in = in < 0 ? 0 : in;\
+@@ -37,7 +38,7 @@
+    in = in > ((1<<bits)-1) ? ((1<<bits)-1) : in;\
+    out=in;
+ 
+-void
++static void
+ ClearBorders(uint8_t *rgb, int sx, int sy, int w)
+ {
+     int i, j;
+@@ -61,7 +62,7 @@ ClearBorders(uint8_t *rgb, int sx, int sy, int w)
+     }
+ }
+ 
+-void
++static void
+ ClearBorders_uint16(uint16_t * rgb, int sx, int sy, int w)
+ {
+     int i, j;
+@@ -99,7 +100,7 @@ ClearBorders_uint16(uint16_t * rgb, int sx, int sy, int w)
+ /* 8-bits versions */
+ /* insprired by OpenCV's Bayer decoding */
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_NearestNeighbor(const uint8_t *restrict bayer, uint8_t *restrict rgb, int sx, int sy, int tile)
+ {
+     const int bayerStep = sx;
+@@ -184,7 +185,7 @@ dc1394_bayer_NearestNeighbor(const uint8_t *restrict bayer, uint8_t *restrict rg
+ }
+ 
+ /* OpenCV's Bayer decoding */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_Bilinear(const uint8_t *restrict bayer, uint8_t *restrict rgb, int sx, int sy, int tile)
+ {
+     const int bayerStep = sx;
+@@ -295,7 +296,7 @@ dc1394_bayer_Bilinear(const uint8_t *restrict bayer, uint8_t *restrict rgb, int
+ /* High-Quality Linear Interpolation For Demosaicing Of
+    Bayer-Patterned Color Images, by Henrique S. Malvar, Li-wei He, and
+    Ross Cutler, in ICASSP'04 */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_HQLinear(const uint8_t *restrict bayer, uint8_t *restrict rgb, int sx, int sy, int tile)
+ {
+     const int bayerStep = sx;
+@@ -497,7 +498,7 @@ dc1394_bayer_HQLinear(const uint8_t *restrict bayer, uint8_t *restrict rgb, int
+ /*   (Laroche,Claude A.  "Apparatus and method for adaptively
+      interpolating a full color image utilizing chrominance gradients"
+      U.S. Patent 5,373,322) */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_EdgeSense(const uint8_t *restrict bayer, uint8_t *restrict rgb, int sx, int sy, int tile)
+ {
+     /* Removed due to patent concerns */
+@@ -505,7 +506,7 @@ dc1394_bayer_EdgeSense(const uint8_t *restrict bayer, uint8_t *restrict rgb, int
+ }
+ 
+ /* coriander's Bayer decoding */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_Downsample(const uint8_t *restrict bayer, uint8_t *restrict rgb, int sx, int sy, int tile)
+ {
+     uint8_t *outR, *outG, *outB;
+@@ -563,7 +564,7 @@ dc1394_bayer_Downsample(const uint8_t *restrict bayer, uint8_t *restrict rgb, in
+ }
+ 
+ /* this is the method used inside AVT cameras. See AVT docs. */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_Simple(const uint8_t *restrict bayer, uint8_t *restrict rgb, int sx, int sy, int tile)
+ {
+     const int bayerStep = sx;
+@@ -650,7 +651,7 @@ dc1394_bayer_Simple(const uint8_t *restrict bayer, uint8_t *restrict rgb, int sx
+ /* 16-bits versions */
+ 
+ /* insprired by OpenCV's Bayer decoding */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_NearestNeighbor_uint16(const uint16_t *restrict bayer, uint16_t *restrict rgb, int sx, int sy, int tile, int bits)
+ {
+     const int bayerStep = sx;
+@@ -735,7 +736,7 @@ dc1394_bayer_NearestNeighbor_uint16(const uint16_t *restrict bayer, uint16_t *re
+ 
+ }
+ /* OpenCV's Bayer decoding */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_Bilinear_uint16(const uint16_t *restrict bayer, uint16_t *restrict rgb, int sx, int sy, int tile, int bits)
+ {
+     const int bayerStep = sx;
+@@ -835,7 +836,7 @@ dc1394_bayer_Bilinear_uint16(const uint16_t *restrict bayer, uint16_t *restrict
+ /* High-Quality Linear Interpolation For Demosaicing Of
+    Bayer-Patterned Color Images, by Henrique S. Malvar, Li-wei He, and
+    Ross Cutler, in ICASSP'04 */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_HQLinear_uint16(const uint16_t *restrict bayer, uint16_t *restrict rgb, int sx, int sy, int tile, int bits)
+ {
+     const int bayerStep = sx;
+@@ -1045,7 +1046,7 @@ dc1394_bayer_HQLinear_uint16(const uint16_t *restrict bayer, uint16_t *restrict
+ }
+ 
+ /* coriander's Bayer decoding */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_EdgeSense_uint16(const uint16_t *restrict bayer, uint16_t *restrict rgb, int sx, int sy, int tile, int bits)
+ {
+     /* Removed due to patent concerns */
+@@ -1053,7 +1054,7 @@ dc1394_bayer_EdgeSense_uint16(const uint16_t *restrict bayer, uint16_t *restrict
+ }
+ 
+ /* coriander's Bayer decoding */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_Downsample_uint16(const uint16_t *restrict bayer, uint16_t *restrict rgb, int sx, int sy, int tile, int bits)
+ {
+     uint16_t *outR, *outG, *outB;
+@@ -1113,7 +1114,7 @@ dc1394_bayer_Downsample_uint16(const uint16_t *restrict bayer, uint16_t *restric
+ }
+ 
+ /* coriander's Bayer decoding */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_Simple_uint16(const uint16_t *restrict bayer, uint16_t *restrict rgb, int sx, int sy, int tile, int bits)
+ {
+     uint16_t *outR, *outG, *outB;
+@@ -1329,7 +1330,7 @@ static const signed char bayervng_terms[] = {
+     +1,+0,+2,+1,0,0x10
+ }, bayervng_chood[] = { -1,-1, -1,0, -1,+1, 0,+1, +1,+1, +1,0, +1,-1, 0,-1 };
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_VNG(const uint8_t *restrict bayer,
+                  uint8_t *restrict dst, int sx, int sy,
+                  dc1394color_filter_t pattern)
+@@ -1455,7 +1456,7 @@ dc1394_bayer_VNG(const uint8_t *restrict bayer,
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_VNG_uint16(const uint16_t *restrict bayer,
+                         uint16_t *restrict dst, int sx, int sy,
+                         dc1394color_filter_t pattern, int bits)
+@@ -1631,7 +1632,7 @@ static void cam_to_cielab (uint16_t cam[3], float lab[3]) /* [SA] */
+  */
+ #define TS 256                /* Tile Size */
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_AHD(const uint8_t *restrict bayer,
+                  uint8_t *restrict dst, int sx, int sy,
+                  dc1394color_filter_t pattern)
+@@ -1806,7 +1807,7 @@ dc1394_bayer_AHD(const uint8_t *restrict bayer,
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_AHD_uint16(const uint16_t *restrict bayer,
+                         uint16_t *restrict dst, int sx, int sy,
+                         dc1394color_filter_t pattern, int bits)
+@@ -1977,7 +1978,7 @@ dc1394_bayer_AHD_uint16(const uint16_t *restrict bayer,
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_decoding_8bit(const uint8_t *restrict bayer, uint8_t *restrict rgb, uint32_t sx, uint32_t sy, dc1394color_filter_t tile, dc1394bayer_method_t method)
+ {
+     switch (method) {
+@@ -2003,7 +2004,7 @@ dc1394_bayer_decoding_8bit(const uint8_t *restrict bayer, uint8_t *restrict rgb,
+ 
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_bayer_decoding_16bit(const uint16_t *restrict bayer, uint16_t *restrict rgb, uint32_t sx, uint32_t sy, dc1394color_filter_t tile, dc1394bayer_method_t method, uint32_t bits)
+ {
+     switch (method) {
+@@ -2029,7 +2030,7 @@ dc1394_bayer_decoding_16bit(const uint16_t *restrict bayer, uint16_t *restrict r
+ 
+ }
+ 
+-dc1394error_t
++static dc1394error_t
+ Adapt_buffer_bayer(dc1394video_frame_t *in, dc1394video_frame_t *out, dc1394bayer_method_t method)
+ {
+     uint32_t bpp;
+@@ -2118,7 +2119,7 @@ Adapt_buffer_bayer(dc1394video_frame_t *in, dc1394video_frame_t *out, dc1394baye
+     return DC1394_MEMORY_ALLOCATION_FAILURE;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_debayer_frames(dc1394video_frame_t *in, dc1394video_frame_t *out, dc1394bayer_method_t method)
+ {
+     if ((method<DC1394_BAYER_METHOD_MIN)||(method>DC1394_BAYER_METHOD_MAX))
+diff --git a/libdc1394/dc1394/capture.c b/libdc1394/dc1394/capture.c
+index a33a3b2..eab2373 100644
+--- a/libdc1394/dc1394/capture.c
++++ b/libdc1394/dc1394/capture.c
+@@ -23,8 +23,9 @@
+ #include "control.h"
+ #include "platform.h"
+ #include "internal.h"
++#include "visibility.h"
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_capture_setup (dc1394camera_t *camera, uint32_t num_dma_buffers,
+         uint32_t flags)
+ {
+@@ -35,7 +36,7 @@ dc1394_capture_setup (dc1394camera_t *camera, uint32_t num_dma_buffers,
+     return d->capture_setup (cpriv->pcam, num_dma_buffers, flags);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_capture_stop (dc1394camera_t *camera)
+ {
+     dc1394camera_priv_t * cpriv = DC1394_CAMERA_PRIV (camera);
+@@ -45,7 +46,7 @@ dc1394_capture_stop (dc1394camera_t *camera)
+     return d->capture_stop (cpriv->pcam);
+ }
+ 
+-int
++DLL_PUBLIC int
+ dc1394_capture_get_fileno (dc1394camera_t * camera)
+ {
+     dc1394camera_priv_t * cpriv = DC1394_CAMERA_PRIV (camera);
+@@ -55,7 +56,7 @@ dc1394_capture_get_fileno (dc1394camera_t * camera)
+     return d->capture_get_fileno (cpriv->pcam);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_capture_dequeue (dc1394camera_t * camera, dc1394capture_policy_t policy,
+         dc1394video_frame_t **frame)
+ {
+@@ -66,7 +67,7 @@ dc1394_capture_dequeue (dc1394camera_t * camera, dc1394capture_policy_t policy,
+     return d->capture_dequeue (cpriv->pcam, policy, frame);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_capture_enqueue (dc1394camera_t * camera, dc1394video_frame_t * frame)
+ {
+     dc1394camera_priv_t * cpriv = DC1394_CAMERA_PRIV (camera);
+@@ -76,7 +77,7 @@ dc1394_capture_enqueue (dc1394camera_t * camera, dc1394video_frame_t * frame)
+     return d->capture_enqueue (cpriv->pcam, frame);
+ }
+ 
+-dc1394bool_t
++DLL_PUBLIC dc1394bool_t
+ dc1394_capture_is_frame_corrupt (dc1394camera_t * camera,
+         dc1394video_frame_t * frame)
+ {
+diff --git a/libdc1394/dc1394/control.c b/libdc1394/dc1394/control.c
+index c62e0e2..b7dce64 100644
+--- a/libdc1394/dc1394/control.c
++++ b/libdc1394/dc1394/control.c
+@@ -27,8 +27,9 @@
+ 
+ #include "internal.h"
+ #include "offsets.h"
++#include "visibility.h"
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_camera_set_broadcast(dc1394camera_t *camera, dc1394bool_t pwr)
+ {
+     dc1394camera_priv_t * priv = DC1394_CAMERA_PRIV (camera);
+@@ -38,7 +39,7 @@ dc1394_camera_set_broadcast(dc1394camera_t *camera, dc1394bool_t pwr)
+     return d->set_broadcast (priv->pcam, pwr);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_camera_get_broadcast(dc1394camera_t *camera, dc1394bool_t *pwr)
+ {
+     dc1394camera_priv_t * priv = DC1394_CAMERA_PRIV (camera);
+@@ -48,7 +49,7 @@ dc1394_camera_get_broadcast(dc1394camera_t *camera, dc1394bool_t *pwr)
+     return d->get_broadcast (priv->pcam, pwr);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_reset_bus (dc1394camera_t * camera)
+ {
+     dc1394camera_priv_t * priv = DC1394_CAMERA_PRIV (camera);
+@@ -58,7 +59,7 @@ dc1394_reset_bus (dc1394camera_t * camera)
+     return d->reset_bus (priv->pcam);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_read_cycle_timer (dc1394camera_t * camera,
+                          uint32_t * cycle_timer, uint64_t * local_time)
+ {
+@@ -69,7 +70,7 @@ dc1394_read_cycle_timer (dc1394camera_t * camera,
+     return d->read_cycle_timer (priv->pcam, cycle_timer, local_time);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_camera_get_node (dc1394camera_t *camera, uint32_t *node,
+         uint32_t * generation)
+ {
+@@ -153,7 +154,7 @@ update_camera_info (dc1394camera_t *camera)
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_camera_print_info(dc1394camera_t *camera, FILE* fd)
+ {
+     dc1394camera_priv_t * cpriv = DC1394_CAMERA_PRIV (camera);
+@@ -197,7 +198,7 @@ dc1394_camera_print_info(dc1394camera_t *camera, FILE* fd)
+  Collects the available features for the camera
+  described by node and stores them in features.
+ *****************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_get_all(dc1394camera_t *camera, dc1394featureset_t *features)
+ {
+     uint32_t i, j;
+@@ -218,7 +219,7 @@ dc1394_feature_get_all(dc1394camera_t *camera, dc1394featureset_t *features)
+  Stores the bounds and options associated with the
+  feature described by feature->id
+ *****************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_get(dc1394camera_t *camera, dc1394feature_info_t *feature)
+ {
+     uint64_t offset;
+@@ -340,7 +341,7 @@ dc1394_feature_get(dc1394camera_t *camera, dc1394feature_info_t *feature)
+ 
+  Displays the bounds and options of the given feature
+ *****************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_print(dc1394feature_info_t *f, FILE *fd)
+ {
+     int fid= f->id;
+@@ -469,7 +470,7 @@ dc1394_feature_print(dc1394feature_info_t *f, FILE *fd)
+ 
+  Displays the entire feature set stored in features
+ *****************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_print_all(dc1394featureset_t *features, FILE *fd)
+ {
+     uint32_t i, j;
+@@ -492,7 +493,7 @@ dc1394_feature_print_all(dc1394featureset_t *features, FILE *fd)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_camera_reset(dc1394camera_t *camera)
+ {
+     dc1394error_t err;
+@@ -501,7 +502,7 @@ dc1394_camera_reset(dc1394camera_t *camera)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_get_supported_modes(dc1394camera_t *camera, dc1394video_modes_t *modes)
+ {
+     dc1394error_t err;
+@@ -579,7 +580,7 @@ dc1394_video_get_supported_modes(dc1394camera_t *camera, dc1394video_modes_t *mo
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_get_supported_framerates(dc1394camera_t *camera, dc1394video_mode_t video_mode, dc1394framerates_t *framerates)
+ {
+     dc1394framerate_t framerate;
+@@ -624,7 +625,7 @@ dc1394_video_get_supported_framerates(dc1394camera_t *camera, dc1394video_mode_t
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_get_framerate(dc1394camera_t *camera, dc1394framerate_t *framerate)
+ {
+     uint32_t value;
+@@ -638,7 +639,7 @@ dc1394_video_get_framerate(dc1394camera_t *camera, dc1394framerate_t *framerate)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_set_framerate(dc1394camera_t *camera, dc1394framerate_t framerate)
+ {
+     dc1394error_t err;
+@@ -652,7 +653,7 @@ dc1394_video_set_framerate(dc1394camera_t *camera, dc1394framerate_t framerate)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_get_mode(dc1394camera_t *camera, dc1394video_mode_t *mode)
+ {
+     dc1394error_t err;
+@@ -691,7 +692,7 @@ dc1394_video_get_mode(dc1394camera_t *camera, dc1394video_mode_t *mode)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_set_mode(dc1394camera_t *camera, dc1394video_mode_t  mode)
+ {
+     uint32_t format, min;
+@@ -737,7 +738,7 @@ dc1394_video_set_mode(dc1394camera_t *camera, dc1394video_mode_t  mode)
+ 
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_get_iso_speed(dc1394camera_t *camera, dc1394speed_t *speed)
+ {
+     dc1394error_t err;
+@@ -767,7 +768,7 @@ dc1394_video_get_iso_speed(dc1394camera_t *camera, dc1394speed_t *speed)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_set_iso_speed(dc1394camera_t *camera, dc1394speed_t speed)
+ {
+     dc1394error_t err;
+@@ -806,7 +807,7 @@ dc1394_video_set_iso_speed(dc1394camera_t *camera, dc1394speed_t speed)
+     return err;;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_get_iso_channel(dc1394camera_t *camera, uint32_t * channel)
+ {
+     dc1394error_t err;
+@@ -827,7 +828,7 @@ dc1394_video_get_iso_channel(dc1394camera_t *camera, uint32_t * channel)
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_set_iso_channel(dc1394camera_t *camera, uint32_t channel)
+ {
+     dc1394error_t err;
+@@ -865,7 +866,7 @@ dc1394_video_set_iso_channel(dc1394camera_t *camera, uint32_t channel)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_get_operation_mode(dc1394camera_t *camera, dc1394operation_mode_t  *mode)
+ {
+     dc1394error_t err;
+@@ -888,7 +889,7 @@ dc1394_video_get_operation_mode(dc1394camera_t *camera, dc1394operation_mode_t
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_set_operation_mode(dc1394camera_t *camera, dc1394operation_mode_t  mode)
+ {
+     dc1394error_t err;
+@@ -918,7 +919,7 @@ dc1394_video_set_operation_mode(dc1394camera_t *camera, dc1394operation_mode_t
+ 
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_camera_set_power(dc1394camera_t *camera, dc1394switch_t pwr)
+ {
+     dc1394error_t err;
+@@ -938,7 +939,7 @@ dc1394_camera_set_power(dc1394camera_t *camera, dc1394switch_t pwr)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_set_transmission(dc1394camera_t *camera, dc1394switch_t pwr)
+ {
+     dc1394error_t err;
+@@ -956,7 +957,7 @@ dc1394_video_set_transmission(dc1394camera_t *camera, dc1394switch_t pwr)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_get_transmission(dc1394camera_t *camera, dc1394switch_t *is_on)
+ {
+     dc1394error_t err;
+@@ -968,7 +969,7 @@ dc1394_video_get_transmission(dc1394camera_t *camera, dc1394switch_t *is_on)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_set_one_shot(dc1394camera_t *camera, dc1394switch_t pwr)
+ {
+     dc1394error_t err;
+@@ -988,7 +989,7 @@ dc1394_video_set_one_shot(dc1394camera_t *camera, dc1394switch_t pwr)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_get_one_shot(dc1394camera_t *camera, dc1394bool_t *is_on)
+ {
+     uint32_t value;
+@@ -998,7 +999,7 @@ dc1394_video_get_one_shot(dc1394camera_t *camera, dc1394bool_t *is_on)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_get_multi_shot(dc1394camera_t *camera, dc1394bool_t *is_on, uint32_t *numFrames)
+ {
+     uint32_t value;
+@@ -1010,7 +1011,7 @@ dc1394_video_get_multi_shot(dc1394camera_t *camera, dc1394bool_t *is_on, uint32_
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_set_multi_shot(dc1394camera_t *camera, uint32_t numFrames, dc1394switch_t pwr)
+ {
+     dc1394error_t err;
+@@ -1030,7 +1031,7 @@ dc1394_video_set_multi_shot(dc1394camera_t *camera, uint32_t numFrames, dc1394sw
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_whitebalance_get_value(dc1394camera_t *camera, uint32_t *u_b_value, uint32_t *v_r_value)
+ {
+     uint32_t value;
+@@ -1042,7 +1043,7 @@ dc1394_feature_whitebalance_get_value(dc1394camera_t *camera, uint32_t *u_b_valu
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_whitebalance_set_value(dc1394camera_t *camera, uint32_t u_b_value, uint32_t v_r_value)
+ {
+     uint32_t curval;
+@@ -1056,7 +1057,7 @@ dc1394_feature_whitebalance_set_value(dc1394camera_t *camera, uint32_t u_b_value
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_temperature_get_value(dc1394camera_t *camera, uint32_t *target_temperature, uint32_t *temperature)
+ {
+     uint32_t value;
+@@ -1067,7 +1068,7 @@ dc1394_feature_temperature_get_value(dc1394camera_t *camera, uint32_t *target_te
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_temperature_set_value(dc1394camera_t *camera, uint32_t target_temperature)
+ {
+     dc1394error_t err;
+@@ -1083,7 +1084,7 @@ dc1394_feature_temperature_set_value(dc1394camera_t *camera, uint32_t target_tem
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_whiteshading_get_value(dc1394camera_t *camera, uint32_t *r_value, uint32_t *g_value, uint32_t *b_value)
+ {
+     uint32_t value;
+@@ -1097,7 +1098,7 @@ dc1394_feature_whiteshading_get_value(dc1394camera_t *camera, uint32_t *r_value,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_whiteshading_set_value(dc1394camera_t *camera, uint32_t r_value, uint32_t g_value, uint32_t b_value)
+ {
+     uint32_t curval;
+@@ -1114,7 +1115,7 @@ dc1394_feature_whiteshading_set_value(dc1394camera_t *camera, uint32_t r_value,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_external_trigger_get_mode(dc1394camera_t *camera, dc1394trigger_mode_t *mode)
+ {
+     uint32_t value;
+@@ -1129,7 +1130,7 @@ dc1394_external_trigger_get_mode(dc1394camera_t *camera, dc1394trigger_mode_t *m
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_external_trigger_set_mode(dc1394camera_t *camera, dc1394trigger_mode_t mode)
+ {
+     dc1394error_t err;
+@@ -1152,7 +1153,7 @@ dc1394_external_trigger_set_mode(dc1394camera_t *camera, dc1394trigger_mode_t mo
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_external_trigger_get_supported_sources(dc1394camera_t *camera, dc1394trigger_sources_t *sources)
+ {
+     uint32_t value;
+@@ -1176,7 +1177,7 @@ dc1394_external_trigger_get_supported_sources(dc1394camera_t *camera, dc1394trig
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_external_trigger_get_source(dc1394camera_t *camera, dc1394trigger_source_t *source)
+ {
+     uint32_t value;
+@@ -1191,7 +1192,7 @@ dc1394_external_trigger_get_source(dc1394camera_t *camera, dc1394trigger_source_
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_external_trigger_set_source(dc1394camera_t *camera, dc1394trigger_source_t source)
+ {
+     dc1394error_t err;
+@@ -1213,7 +1214,7 @@ dc1394_external_trigger_set_source(dc1394camera_t *camera, dc1394trigger_source_
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_get_value(dc1394camera_t *camera, dc1394feature_t feature, uint32_t *value)
+ {
+     uint32_t quadval;
+@@ -1239,7 +1240,7 @@ dc1394_feature_get_value(dc1394camera_t *camera, dc1394feature_t feature, uint32
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_set_value(dc1394camera_t *camera, dc1394feature_t feature, uint32_t value)
+ {
+     uint32_t quadval;
+@@ -1266,7 +1267,7 @@ dc1394_feature_set_value(dc1394camera_t *camera, dc1394feature_t feature, uint32
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_is_present(dc1394camera_t *camera, dc1394feature_t feature, dc1394bool_t *value)
+ {
+ /*
+@@ -1352,7 +1353,7 @@ dc1394_feature_is_present(dc1394camera_t *camera, dc1394feature_t feature, dc139
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_is_readable(dc1394camera_t *camera, dc1394feature_t feature, dc1394bool_t *value)
+ {
+     dc1394error_t err;
+@@ -1372,7 +1373,7 @@ dc1394_feature_is_readable(dc1394camera_t *camera, dc1394feature_t feature, dc13
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_is_switchable(dc1394camera_t *camera, dc1394feature_t feature, dc1394bool_t *value)
+ {
+     dc1394error_t err;
+@@ -1392,7 +1393,7 @@ dc1394_feature_is_switchable(dc1394camera_t *camera, dc1394feature_t feature, dc
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_get_power(dc1394camera_t *camera, dc1394feature_t feature, dc1394switch_t *value)
+ {
+     dc1394error_t err;
+@@ -1412,7 +1413,7 @@ dc1394_feature_get_power(dc1394camera_t *camera, dc1394feature_t feature, dc1394
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_set_power(dc1394camera_t *camera, dc1394feature_t feature, dc1394switch_t value)
+ {
+     dc1394error_t err;
+@@ -1442,7 +1443,7 @@ dc1394_feature_set_power(dc1394camera_t *camera, dc1394feature_t feature, dc1394
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_get_modes(dc1394camera_t *camera, dc1394feature_t feature, dc1394feature_modes_t *modes)
+ {
+     dc1394error_t err;
+@@ -1480,7 +1481,7 @@ dc1394_feature_get_modes(dc1394camera_t *camera, dc1394feature_t feature, dc1394
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_get_mode(dc1394camera_t *camera, dc1394feature_t feature, dc1394feature_mode_t *mode)
+ {
+     dc1394error_t err;
+@@ -1513,7 +1514,7 @@ dc1394_feature_get_mode(dc1394camera_t *camera, dc1394feature_t feature, dc1394f
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_set_mode(dc1394camera_t *camera, dc1394feature_t feature, dc1394feature_mode_t mode)
+ {
+     dc1394error_t err;
+@@ -1554,7 +1555,7 @@ dc1394_feature_set_mode(dc1394camera_t *camera, dc1394feature_t feature, dc1394f
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_get_boundaries(dc1394camera_t *camera, dc1394feature_t feature, uint32_t *min, uint32_t *max)
+ {
+     dc1394error_t err;
+@@ -1582,7 +1583,7 @@ dc1394_feature_get_boundaries(dc1394camera_t *camera, dc1394feature_t feature, u
+  * Memory load/save functions
+  */
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_memory_busy(dc1394camera_t *camera, dc1394bool_t *value)
+ {
+     uint32_t quadlet;
+@@ -1592,7 +1593,7 @@ dc1394_memory_busy(dc1394camera_t *camera, dc1394bool_t *value)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_memory_save(dc1394camera_t *camera, uint32_t channel)
+ {
+     dc1394error_t err=dc1394_set_control_register(camera, REG_CAMERA_MEM_SAVE_CH, (uint32_t)((channel & 0xFUL) << 28));
+@@ -1603,7 +1604,7 @@ dc1394_memory_save(dc1394camera_t *camera, uint32_t channel)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_memory_load(dc1394camera_t *camera, uint32_t channel)
+ {
+     dc1394error_t err=dc1394_set_control_register(camera, REG_CAMERA_CUR_MEM_CH, (uint32_t)((channel & 0xFUL) << 28));
+@@ -1615,7 +1616,7 @@ dc1394_memory_load(dc1394camera_t *camera, uint32_t channel)
+  * Trigger functions
+  */
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_external_trigger_set_polarity(dc1394camera_t *camera, dc1394trigger_polarity_t polarity)
+ {
+     dc1394error_t err;
+@@ -1633,7 +1634,7 @@ dc1394_external_trigger_set_polarity(dc1394camera_t *camera, dc1394trigger_polar
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_external_trigger_get_polarity(dc1394camera_t *camera, dc1394trigger_polarity_t *polarity)
+ {
+     uint32_t value;
+@@ -1644,7 +1645,7 @@ dc1394_external_trigger_get_polarity(dc1394camera_t *camera, dc1394trigger_polar
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_external_trigger_has_polarity(dc1394camera_t *camera, dc1394bool_t *polarity)
+ {
+     dc1394error_t err;
+@@ -1661,7 +1662,7 @@ dc1394_external_trigger_has_polarity(dc1394camera_t *camera, dc1394bool_t *polar
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_external_trigger_set_power(dc1394camera_t *camera, dc1394switch_t pwr)
+ {
+     dc1394error_t err=dc1394_feature_set_power(camera, DC1394_FEATURE_TRIGGER, pwr);
+@@ -1669,7 +1670,7 @@ dc1394_external_trigger_set_power(dc1394camera_t *camera, dc1394switch_t pwr)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_external_trigger_get_power(dc1394camera_t *camera, dc1394switch_t *pwr)
+ {
+     dc1394error_t err=dc1394_feature_get_power(camera, DC1394_FEATURE_TRIGGER, pwr);
+@@ -1677,7 +1678,7 @@ dc1394_external_trigger_get_power(dc1394camera_t *camera, dc1394switch_t *pwr)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_software_trigger_set_power(dc1394camera_t *camera, dc1394switch_t pwr)
+ {
+     dc1394error_t err;
+@@ -1692,7 +1693,7 @@ dc1394_software_trigger_set_power(dc1394camera_t *camera, dc1394switch_t pwr)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_software_trigger_get_power(dc1394camera_t *camera, dc1394switch_t *pwr)
+ {
+     uint32_t value;
+@@ -1704,7 +1705,7 @@ dc1394_software_trigger_get_power(dc1394camera_t *camera, dc1394switch_t *pwr)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_get_data_depth(dc1394camera_t *camera, uint32_t *depth)
+ {
+     dc1394error_t err;
+@@ -1740,7 +1741,7 @@ dc1394_video_get_data_depth(dc1394camera_t *camera, uint32_t *depth)
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_get_absolute_control(dc1394camera_t *camera, dc1394feature_t feature, dc1394switch_t *pwr)
+ {
+     dc1394error_t err;
+@@ -1760,7 +1761,7 @@ dc1394_feature_get_absolute_control(dc1394camera_t *camera, dc1394feature_t feat
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_set_absolute_control(dc1394camera_t *camera, dc1394feature_t feature, dc1394switch_t pwr)
+ {
+     dc1394error_t err;
+@@ -1790,7 +1791,7 @@ dc1394_feature_set_absolute_control(dc1394camera_t *camera, dc1394feature_t feat
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_has_absolute_control(dc1394camera_t *camera, dc1394feature_t feature, dc1394bool_t *value)
+ {
+     dc1394error_t err;
+@@ -1811,7 +1812,7 @@ dc1394_feature_has_absolute_control(dc1394camera_t *camera, dc1394feature_t feat
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_video_get_bandwidth_usage(dc1394camera_t *camera, uint32_t *bandwidth)
+ {
+     uint32_t format, qpp;
+@@ -1855,7 +1856,7 @@ dc1394_video_get_bandwidth_usage(dc1394camera_t *camera, uint32_t *bandwidth)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_get_absolute_boundaries(dc1394camera_t *camera, dc1394feature_t feature, float *min, float *max)
+ {
+     dc1394error_t err=DC1394_SUCCESS;
+@@ -1873,7 +1874,7 @@ dc1394_feature_get_absolute_boundaries(dc1394camera_t *camera, dc1394feature_t f
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_get_absolute_value(dc1394camera_t *camera, dc1394feature_t feature, float *value)
+ {
+     dc1394error_t err=DC1394_SUCCESS;
+@@ -1888,7 +1889,7 @@ dc1394_feature_get_absolute_value(dc1394camera_t *camera, dc1394feature_t featur
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_feature_set_absolute_value(dc1394camera_t *camera, dc1394feature_t feature, float value)
+ {
+     dc1394error_t err=DC1394_SUCCESS;
+@@ -1907,7 +1908,7 @@ dc1394_feature_set_absolute_value(dc1394camera_t *camera, dc1394feature_t featur
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_pio_set(dc1394camera_t *camera, uint32_t value)
+ {
+     dc1394error_t err=DC1394_SUCCESS;
+@@ -1919,7 +1920,7 @@ dc1394_pio_set(dc1394camera_t *camera, uint32_t value)
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_pio_get(dc1394camera_t *camera, uint32_t *value)
+ {
+     dc1394error_t err=DC1394_SUCCESS;
+@@ -1938,7 +1939,7 @@ dc1394_pio_get(dc1394camera_t *camera, uint32_t *value)
+ /*
+   Create a new dc1394 struct, which also initialises the library
+ */
+-dc1394_t *
++DLL_PUBLIC dc1394_t *
+ dc1394_new (void)
+ {
+     dc1394_t * d = calloc (1, sizeof (dc1394_t));
+@@ -1984,7 +1985,7 @@ dc1394_new (void)
+ /*
+   Free a dc1394 struct, which also terminates the use of the library
+ */
+-void
++DLL_PUBLIC void
+ dc1394_free (dc1394_t * d)
+ {
+     free_enumeration (d);
+@@ -1999,7 +2000,7 @@ dc1394_free (dc1394_t * d)
+     free (d);
+ }
+ 
+-void register_platform (dc1394_t * d, const platform_dispatch_t * dispatch,
++DLL_LOCAL void register_platform (dc1394_t * d, const platform_dispatch_t * dispatch,
+         const char * name)
+ {
+     if (!dispatch->platform_new || !dispatch->platform_free ||
+@@ -2020,7 +2021,7 @@ void register_platform (dc1394_t * d, const platform_dispatch_t * dispatch,
+     d->num_platforms++;
+ }
+ 
+-char *
++static char *
+ get_leaf_string (platform_camera_t * pcam, const platform_dispatch_t * disp,
+         uint32_t offset)
+ {
+@@ -2047,7 +2048,7 @@ get_leaf_string (platform_camera_t * pcam, const platform_dispatch_t * disp,
+     return str;
+ }
+ 
+-dc1394camera_t *
++DLL_PUBLIC dc1394camera_t *
+ dc1394_camera_new_unit (dc1394_t * d, uint64_t guid, int unit)
+ {
+     int i;
+@@ -2168,7 +2169,7 @@ dc1394_camera_new_unit (dc1394_t * d, uint64_t guid, int unit)
+     return NULL;
+ }
+ 
+-dc1394camera_t *
++DLL_PUBLIC dc1394camera_t *
+ dc1394_camera_new (dc1394_t * d, uint64_t guid)
+ {
+     return dc1394_camera_new_unit (d, guid, -1);
+@@ -2178,7 +2179,7 @@ dc1394_camera_new (dc1394_t * d, uint64_t guid)
+   Free a camera structure as well as resources used by that camera (bandwidth,
+   ISO channels, etc...)
+ */
+-void
++DLL_PUBLIC void
+ dc1394_camera_free(dc1394camera_t *camera)
+ {
+     dc1394camera_priv_t * cpriv = DC1394_CAMERA_PRIV (camera);
+diff --git a/libdc1394/dc1394/conversions.c b/libdc1394/dc1394/conversions.c
+index 6148126..52ff525 100644
+--- a/libdc1394/dc1394/conversions.c
++++ b/libdc1394/dc1394/conversions.c
+@@ -23,6 +23,7 @@
+ #include <string.h>
+ #include <stdlib.h>
+ #include "conversions.h"
++#include "visibility.h"
+ 
+ // this should disappear...
+ extern void swab();
+@@ -33,7 +34,7 @@ extern void swab();
+  *
+  **********************************************************************/
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_YUV422_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t byte_order)
+ {
+     switch (byte_order) {
+@@ -48,7 +49,7 @@ dc1394_YUV422_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t
+     }
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_YUV411_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t byte_order)
+ {
+     register int i=(width*height) + ((width*height) >> 1) -1;
+@@ -102,7 +103,7 @@ dc1394_YUV411_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t
+ 
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_YUV444_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t byte_order)
+ {
+     register int i = (width*height) + ((width*height) << 1)-1;
+@@ -145,7 +146,7 @@ dc1394_YUV444_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t
+     }
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_MONO8_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t byte_order)
+ {
+     if ((width%2)==0) {
+@@ -216,7 +217,7 @@ dc1394_MONO8_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t w
+     }
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_MONO16_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t byte_order, uint32_t bits)
+ {
+     register int i = ((width*height) << 1)-1;
+@@ -254,7 +255,7 @@ dc1394_MONO16_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t
+ 
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_MONO16_to_MONO8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t bits)
+ {
+     register int i = ((width*height)<<1)-1;
+@@ -268,7 +269,7 @@ dc1394_MONO16_to_MONO8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t w
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_RGB8_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t byte_order)
+ {
+     register int i = (width*height) + ( (width*height) << 1 )-1;
+@@ -314,7 +315,7 @@ dc1394_RGB8_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t wi
+     }
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_RGB16_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t byte_order, uint32_t bits)
+ {
+     register int i = ( ((width*height) + ( (width*height) << 1 )) << 1 ) -1;
+@@ -378,7 +379,7 @@ dc1394_RGB16_to_YUV422(uint8_t *restrict src, uint8_t *restrict dest, uint32_t w
+  *
+  **********************************************************************/
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_RGB16_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t bits)
+ {
+     register int i = (((width*height) + ( (width*height) << 1 )) << 1)-1;
+@@ -400,7 +401,7 @@ dc1394_RGB16_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t wid
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_YUV444_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height)
+ {
+     register int i = (width*height) + ( (width*height) << 1 ) -1;
+@@ -420,7 +421,7 @@ dc1394_YUV444_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t wi
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_YUV422_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t byte_order)
+ {
+     register int i = ((width*height) << 1)-1;
+@@ -469,7 +470,7 @@ dc1394_YUV422_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t wi
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_YUV411_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height)
+ {
+     register int i = (width*height) + ( (width*height) >> 1 )-1;
+@@ -505,7 +506,7 @@ dc1394_YUV411_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t wi
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_MONO8_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height)
+ {
+     register int i = (width*height)-1;
+@@ -522,7 +523,7 @@ dc1394_MONO8_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t wid
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_MONO16_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t bits)
+ {
+     register int i = ((width*height) << 1)-1;
+@@ -542,7 +543,7 @@ dc1394_MONO16_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t wi
+ 
+ // change a 16bit stereo image (8bit/channel) into two 8bit images on top
+ // of each other
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_deinterlace_stereo(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height)
+ {
+     register int i = (width*height)-1;
+@@ -557,7 +558,7 @@ dc1394_deinterlace_stereo(uint8_t *restrict src, uint8_t *restrict dest, uint32_
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_convert_to_YUV422(uint8_t *src, uint8_t *dest, uint32_t width, uint32_t height, uint32_t byte_order,
+                          dc1394color_coding_t source_coding, uint32_t bits)
+ {
+@@ -594,7 +595,7 @@ dc1394_convert_to_YUV422(uint8_t *src, uint8_t *dest, uint32_t width, uint32_t h
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_convert_to_MONO8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t byte_order,
+                         dc1394color_coding_t source_coding, uint32_t bits)
+ {
+@@ -613,7 +614,7 @@ dc1394_convert_to_MONO8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_convert_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t width, uint32_t height, uint32_t byte_order,
+                        dc1394color_coding_t source_coding, uint32_t bits)
+ {
+@@ -648,7 +649,7 @@ dc1394_convert_to_RGB8(uint8_t *restrict src, uint8_t *restrict dest, uint32_t w
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++static dc1394error_t
+ Adapt_buffer_convert(dc1394video_frame_t *in, dc1394video_frame_t *out)
+ {
+     uint32_t bpp;
+@@ -720,7 +721,7 @@ Adapt_buffer_convert(dc1394video_frame_t *in, dc1394video_frame_t *out)
+     return DC1394_MEMORY_ALLOCATION_FAILURE;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_convert_frames(dc1394video_frame_t *in, dc1394video_frame_t *out)
+ {
+ 
+@@ -883,7 +884,7 @@ dc1394_convert_frames(dc1394video_frame_t *in, dc1394video_frame_t *out)
+ }
+ 
+ 
+-dc1394error_t
++static dc1394error_t
+ Adapt_buffer_stereo(dc1394video_frame_t *in, dc1394video_frame_t *out)
+ {
+     uint32_t bpp;
+@@ -967,7 +968,7 @@ Adapt_buffer_stereo(dc1394video_frame_t *in, dc1394video_frame_t *out)
+ 
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_deinterlace_stereo_frames(dc1394video_frame_t *in, dc1394video_frame_t *out, dc1394stereo_method_t method)
+ {
+     dc1394error_t err;
+diff --git a/libdc1394/dc1394/enumeration.c b/libdc1394/dc1394/enumeration.c
+index 07aa207..ae78d2b 100644
+--- a/libdc1394/dc1394/enumeration.c
++++ b/libdc1394/dc1394/enumeration.c
+@@ -27,6 +27,7 @@
+ #include "internal.h"
+ #include "platform.h"
+ #include "log.h"
++#include "visibility.h"
+ 
+ static void
+ destroy_camera_info (camera_info_t * info)
+@@ -224,7 +225,7 @@ identify_camera (dc1394_t * d, platform_info_t * platform,
+     return 0;
+ }
+ 
+-void
++DLL_LOCAL void
+ free_enumeration (dc1394_t * d)
+ {
+     int i;
+@@ -242,7 +243,7 @@ free_enumeration (dc1394_t * d)
+     d->cameras = NULL;
+ }
+ 
+-int
++DLL_LOCAL int
+ refresh_enumeration (dc1394_t * d)
+ {
+     free_enumeration (d);
+@@ -274,7 +275,7 @@ refresh_enumeration (dc1394_t * d)
+     return 0;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_camera_enumerate (dc1394_t * d, dc1394camera_list_t **list)
+ {
+     if (refresh_enumeration (d) < 0)
+@@ -302,7 +303,7 @@ dc1394_camera_enumerate (dc1394_t * d, dc1394camera_list_t **list)
+ /*
+   Free a list of cameras returned by dc1394_enumerate_cameras()
+  */
+-void
++DLL_PUBLIC void
+ dc1394_camera_free_list (dc1394camera_list_t *list)
+ {
+     if (list)
+diff --git a/libdc1394/dc1394/format7.c b/libdc1394/dc1394/format7.c
+index 06fefdc..23a2d2e 100644
+--- a/libdc1394/dc1394/format7.c
++++ b/libdc1394/dc1394/format7.c
+@@ -34,6 +34,7 @@
+ #include "utils.h"
+ #include "config.h"
+ #include "log.h"
++#include "visibility.h"
+ 
+ /*==========================================================================
+  * This function implements the handshaking available (and sometimes required)
+@@ -41,7 +42,7 @@
+  * Onishi for his feedback and info.
+  *==========================================================================*/
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_value_setting(dc1394camera_t *camera, dc1394video_mode_t video_mode,
+                                  uint32_t *present, uint32_t *setting1,
+                                  uint32_t *err_flag1, uint32_t *err_flag2)
+@@ -68,7 +69,7 @@ dc1394_format7_get_value_setting(dc1394camera_t *camera, dc1394video_mode_t vide
+     return err;
+ }
+ 
+-int
++DLL_PUBLIC int
+ dc1394_format7_set_value_setting(dc1394camera_t *camera, dc1394video_mode_t video_mode)
+ {
+     int err;
+@@ -82,7 +83,7 @@ dc1394_format7_set_value_setting(dc1394camera_t *camera, dc1394video_mode_t vide
+     return err;
+ }
+ 
+-dc1394error_t
++static dc1394error_t
+ _dc1394_v130_handshake(dc1394camera_t *camera, dc1394video_mode_t video_mode)
+ {
+     uint32_t setting_1, err_flag1, err_flag2, v130handshake;
+@@ -135,7 +136,7 @@ _dc1394_v130_handshake(dc1394camera_t *camera, dc1394video_mode_t video_mode)
+     return err;
+ }
+ 
+-dc1394error_t
++static dc1394error_t
+ _dc1394_format7_set_image_position(dc1394camera_t *camera,
+                                    dc1394video_mode_t video_mode, uint32_t left,
+                                    uint32_t top)
+@@ -153,7 +154,7 @@ _dc1394_format7_set_image_position(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++static dc1394error_t
+ _dc1394_format7_set_image_size(dc1394camera_t *camera,
+                                dc1394video_mode_t video_mode, uint32_t width,
+                                uint32_t height)
+@@ -173,7 +174,7 @@ _dc1394_format7_set_image_size(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++static dc1394error_t
+ _dc1394_format7_set_color_coding(dc1394camera_t *camera,
+                                  dc1394video_mode_t video_mode, dc1394color_coding_t color_coding)
+ {
+@@ -201,7 +202,7 @@ _dc1394_format7_set_color_coding(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++static dc1394error_t
+ _dc1394_format7_set_packet_size(dc1394camera_t *camera,
+                                 dc1394video_mode_t video_mode,
+                                 uint32_t packet_size)
+@@ -229,7 +230,7 @@ _dc1394_format7_set_packet_size(dc1394camera_t *camera,
+ /* External functions */
+ /**********************/
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_max_image_size(dc1394camera_t *camera,
+                                   dc1394video_mode_t video_mode,
+                                   uint32_t *horizontal_size,
+@@ -250,7 +251,7 @@ dc1394_format7_get_max_image_size(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_unit_size(dc1394camera_t *camera,
+                              dc1394video_mode_t video_mode,
+                              uint32_t *horizontal_unit,
+@@ -271,7 +272,7 @@ dc1394_format7_get_unit_size(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_image_position(dc1394camera_t *camera,
+                                   dc1394video_mode_t video_mode,
+                                   uint32_t *left_position,
+@@ -293,7 +294,7 @@ dc1394_format7_get_image_position(dc1394camera_t *camera,
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_image_size(dc1394camera_t *camera,
+                               dc1394video_mode_t video_mode,
+                               uint32_t *width,
+@@ -314,7 +315,7 @@ dc1394_format7_get_image_size(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_color_coding(dc1394camera_t *camera,
+                                 dc1394video_mode_t video_mode,
+                                 dc1394color_coding_t *color_coding)
+@@ -334,7 +335,7 @@ dc1394_format7_get_color_coding(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_color_codings(dc1394camera_t *camera,
+                                  dc1394video_mode_t video_mode,
+                                  dc1394color_codings_t *color_codings)
+@@ -360,7 +361,7 @@ dc1394_format7_get_color_codings(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_pixel_number(dc1394camera_t *camera,
+                                  dc1394video_mode_t video_mode,
+                                 uint32_t *pixnum)
+@@ -379,7 +380,7 @@ dc1394_format7_get_pixel_number(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_total_bytes(dc1394camera_t *camera,
+                                dc1394video_mode_t video_mode,
+                                uint64_t *total_bytes)
+@@ -406,7 +407,7 @@ dc1394_format7_get_total_bytes(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_packet_parameters(dc1394camera_t *camera,
+                                      dc1394video_mode_t video_mode, uint32_t *unit_bytes,
+                                      uint32_t *max_bytes)
+@@ -426,7 +427,7 @@ dc1394_format7_get_packet_parameters(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_packet_size(dc1394camera_t *camera,
+                                dc1394video_mode_t video_mode,
+                                uint32_t *packet_size)
+@@ -449,7 +450,7 @@ dc1394_format7_get_packet_size(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_set_image_position(dc1394camera_t *camera,
+                                   dc1394video_mode_t video_mode, uint32_t left,
+                                   uint32_t top)
+@@ -465,7 +466,7 @@ dc1394_format7_set_image_position(dc1394camera_t *camera,
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_set_image_size(dc1394camera_t *camera,
+                               dc1394video_mode_t video_mode, uint32_t width,
+                               uint32_t height)
+@@ -481,7 +482,7 @@ dc1394_format7_set_image_size(dc1394camera_t *camera,
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_set_color_coding(dc1394camera_t *camera,
+                                 dc1394video_mode_t video_mode, dc1394color_coding_t color_coding)
+ {
+@@ -496,7 +497,7 @@ dc1394_format7_set_color_coding(dc1394camera_t *camera,
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_set_packet_size(dc1394camera_t *camera,
+                                dc1394video_mode_t video_mode,
+                                uint32_t packet_bytes)
+@@ -511,7 +512,7 @@ dc1394_format7_set_packet_size(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_recommended_packet_size(dc1394camera_t *camera,
+                                            dc1394video_mode_t video_mode, uint32_t *packet_size)
+ {
+@@ -529,7 +530,7 @@ dc1394_format7_get_recommended_packet_size(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_packets_per_frame(dc1394camera_t *camera,
+                                      dc1394video_mode_t video_mode, uint32_t *ppf)
+ {
+@@ -574,7 +575,7 @@ dc1394_format7_get_packets_per_frame(dc1394camera_t *camera,
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_unit_position(dc1394camera_t *camera,
+                                  dc1394video_mode_t video_mode,
+                                  uint32_t *horizontal_pos,
+@@ -602,7 +603,7 @@ dc1394_format7_get_unit_position(dc1394camera_t *camera,
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_frame_interval(dc1394camera_t *camera, dc1394video_mode_t video_mode, float *interval)
+ {
+     dc1394error_t err;
+@@ -619,7 +620,7 @@ dc1394_format7_get_frame_interval(dc1394camera_t *camera, dc1394video_mode_t vid
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_data_depth(dc1394camera_t *camera, dc1394video_mode_t video_mode, uint32_t *data_depth)
+ {
+     dc1394error_t err;
+@@ -652,7 +653,7 @@ dc1394_format7_get_data_depth(dc1394camera_t *camera, dc1394video_mode_t video_m
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_color_filter(dc1394camera_t *camera, dc1394video_mode_t video_mode, dc1394color_filter_t *color_filter)
+ {
+     dc1394error_t err;
+@@ -671,7 +672,7 @@ dc1394_format7_get_color_filter(dc1394camera_t *camera, dc1394video_mode_t video
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_mode_info(dc1394camera_t *camera, dc1394video_mode_t video_mode, dc1394format7mode_t *f7_mode)
+ {
+     dc1394error_t err=DC1394_SUCCESS;
+@@ -737,7 +738,7 @@ dc1394_format7_get_mode_info(dc1394camera_t *camera, dc1394video_mode_t video_mo
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_modeset(dc1394camera_t *camera, dc1394format7modeset_t *info)
+ {
+     dc1394error_t err;
+@@ -762,7 +763,7 @@ dc1394_format7_get_modeset(dc1394camera_t *camera, dc1394format7modeset_t *info)
+     return err;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_set_roi(dc1394camera_t *camera,
+                        dc1394video_mode_t video_mode,
+                        dc1394color_coding_t color_coding,
+@@ -932,7 +933,7 @@ dc1394_format7_set_roi(dc1394camera_t *camera,
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_format7_get_roi(dc1394camera_t *camera,
+                        dc1394video_mode_t video_mode,
+                        dc1394color_coding_t *color_coding,
+diff --git a/libdc1394/dc1394/juju/control.c b/libdc1394/dc1394/juju/control.c
+index 974d70d..ef6dfb3 100644
+--- a/libdc1394/dc1394/juju/control.c
++++ b/libdc1394/dc1394/juju/control.c
+@@ -35,6 +35,7 @@
+ #include "platform.h"
+ #include "internal.h"
+ #include "juju.h"
++#include "visibility.h"
+ 
+ #define ptr_to_u64(p) ((__u64)(unsigned long)(p))
+ #define u64_to_ptr(p) ((void *)(unsigned long)(p))
+@@ -552,7 +553,7 @@ dc1394_juju_get_broadcast(platform_camera_t * craw, dc1394bool_t *pwr)
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_LOCAL dc1394error_t
+ juju_iso_allocate (platform_camera_t *cam, uint64_t allowed_channels,
+         int bandwidth_units, juju_iso_info **out)
+ {
+@@ -595,7 +596,7 @@ juju_iso_allocate (platform_camera_t *cam, uint64_t allowed_channels,
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_LOCAL dc1394error_t
+ juju_iso_deallocate (platform_camera_t *cam, juju_iso_info * res)
+ {
+     if (res->got_dealloc) {
+@@ -677,7 +678,7 @@ juju_dispatch = {
+     //.iso_allocate_channel = dc1394_juju_iso_allocate_channel,
+ };
+ 
+-void
++DLL_LOCAL void
+ juju_init(dc1394_t * d)
+ {
+     register_platform (d, &juju_dispatch, "juju");
+diff --git a/libdc1394/dc1394/linux/capture.c b/libdc1394/dc1394/linux/capture.c
+index ceabb90..60650d8 100644
+--- a/libdc1394/dc1394/linux/capture.c
++++ b/libdc1394/dc1394/linux/capture.c
+@@ -43,13 +43,14 @@
+ #include "kernel-video1394.h"
+ #include "linux.h"
+ #include "internal.h"
++#include "visibility.h"
+ 
+ /**********************/
+ /* Internal functions */
+ /**********************/
+ 
+ 
+-dc1394error_t
++DLL_LOCAL dc1394error_t
+ open_dma_device(platform_camera_t * craw)
+ {
+     char filename[64];
+@@ -191,7 +192,7 @@ capture_linux_setup(platform_camera_t * craw, uint32_t num_dma_buffers)
+ 
+ 
+ /* This function allows you to specify the DMA device filename manually. */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_capture_set_device_filename(dc1394camera_t* camera, char *filename)
+ {
+     dc1394camera_priv_t * cpriv = DC1394_CAMERA_PRIV (camera);
+@@ -207,7 +208,7 @@ dc1394_capture_set_device_filename(dc1394camera_t* camera, char *filename)
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_linux_capture_setup(platform_camera_t *craw, uint32_t num_dma_buffers,
+                      uint32_t flags)
+ {
+@@ -305,7 +306,7 @@ dc1394_linux_capture_setup(platform_camera_t *craw, uint32_t num_dma_buffers,
+  CAPTURE_STOP
+ *****************************************************/
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_linux_capture_stop(platform_camera_t *craw)
+ {
+     dc1394camera_t * camera = craw->camera;
+@@ -371,7 +372,7 @@ dc1394_linux_capture_stop(platform_camera_t *craw)
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_linux_capture_dequeue (platform_camera_t * craw,
+                         dc1394capture_policy_t policy,
+                         dc1394video_frame_t **frame)
+@@ -430,7 +431,7 @@ dc1394_linux_capture_dequeue (platform_camera_t * craw,
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_linux_capture_enqueue (platform_camera_t * craw,
+                         dc1394video_frame_t * frame)
+ {
+@@ -455,7 +456,7 @@ dc1394_linux_capture_enqueue (platform_camera_t * craw,
+     return DC1394_SUCCESS;
+ }
+ 
+-int
++DLL_PUBLIC int
+ dc1394_linux_capture_get_fileno (platform_camera_t * craw)
+ {
+     return craw->capture.dma_fd;
+diff --git a/libdc1394/dc1394/linux/control.c b/libdc1394/dc1394/linux/control.c
+index 787f981..f8b0b2c 100644
+--- a/libdc1394/dc1394/linux/control.c
++++ b/libdc1394/dc1394/linux/control.c
+@@ -40,6 +40,7 @@
+ #include "linux.h"
+ #include "offsets.h"
+ #include "types.h"
++#include "visibility.h"
+ 
+ static int
+ is_device_available (const char * filename)
+@@ -487,7 +488,7 @@ linux_dispatch = {
+     .iso_release_bandwidth = dc1394_linux_iso_release_bandwidth,
+ };
+ 
+-void
++DLL_LOCAL void
+ linux_init(dc1394_t * d)
+ {
+     register_platform (d, &linux_dispatch, "linux");
+diff --git a/libdc1394/dc1394/log.c b/libdc1394/dc1394/log.c
+index 022461c..12fb149 100644
+--- a/libdc1394/dc1394/log.c
++++ b/libdc1394/dc1394/log.c
+@@ -24,6 +24,7 @@
+ #include "log.h"
+ #include <stdarg.h>
+ #include <stdlib.h>
++#include "visibility.h"
+ 
+ static void
+ default_errorlog_handler(dc1394log_t type, const char *message, void* user)
+@@ -59,7 +60,7 @@ static void *errorlog_data = NULL;
+ static void *warninglog_data = NULL;
+ static void *debuglog_data = NULL;
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_log_register_handler(dc1394log_t type, void(*log_handler)(dc1394log_t type, const char *message, void* user), void* user) {
+     switch (type) {
+     case DC1394_LOG_ERROR:
+@@ -79,7 +80,7 @@ dc1394_log_register_handler(dc1394log_t type, void(*log_handler)(dc1394log_t typ
+     }
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_log_set_default_handler(dc1394log_t type) {
+     switch (type) {
+     case DC1394_LOG_ERROR:
+@@ -100,7 +101,7 @@ dc1394_log_set_default_handler(dc1394log_t type) {
+ }
+ 
+ 
+-void dc1394_log_error(const char *format,...)
++DLL_PUBLIC void dc1394_log_error(const char *format,...)
+ {
+     char string[1024];
+     if (system_errorlog_handler != NULL) {
+@@ -112,7 +113,7 @@ void dc1394_log_error(const char *format,...)
+ }
+ 
+ 
+-void dc1394_log_warning(const char *format,...)
++DLL_PUBLIC void dc1394_log_warning(const char *format,...)
+ {
+     char string[1024];
+     if (system_warninglog_handler != NULL) {
+@@ -124,7 +125,7 @@ void dc1394_log_warning(const char *format,...)
+ }
+ 
+ 
+-void dc1394_log_debug(const char *format,...)
++DLL_PUBLIC void dc1394_log_debug(const char *format,...)
+ {
+     char string[1024];
+     if (system_debuglog_handler != NULL) {
+diff --git a/libdc1394/dc1394/register.c b/libdc1394/dc1394/register.c
+index a2e7891..5219bbd 100644
+--- a/libdc1394/dc1394/register.c
++++ b/libdc1394/dc1394/register.c
+@@ -27,6 +27,7 @@
+ #include "register.h"
+ #include "utils.h"
+ #include "config.h"
++#include "visibility.h"
+ 
+ /* Note: debug modes can be very verbose. */
+ 
+@@ -60,7 +61,7 @@
+     }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_get_registers (dc1394camera_t *camera, uint64_t offset,
+                       uint32_t *value, uint32_t num_regs)
+ {
+@@ -73,7 +74,7 @@ dc1394_get_registers (dc1394camera_t *camera, uint64_t offset,
+             num_regs);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_set_registers (dc1394camera_t *camera, uint64_t offset,
+                       const uint32_t *value, uint32_t num_regs)
+ {
+@@ -90,7 +91,7 @@ dc1394_set_registers (dc1394camera_t *camera, uint64_t offset,
+ /********************************************************************************/
+ /* Get/Set Command Registers                                                    */
+ /********************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_get_control_registers (dc1394camera_t *camera, uint64_t offset,
+                               uint32_t *value, uint32_t num_regs)
+ {
+@@ -98,7 +99,7 @@ dc1394_get_control_registers (dc1394camera_t *camera, uint64_t offset,
+         camera->command_registers_base + offset, value, num_regs);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_set_control_registers (dc1394camera_t *camera, uint64_t offset,
+                               const uint32_t *value, uint32_t num_regs)
+ {
+@@ -109,7 +110,7 @@ dc1394_set_control_registers (dc1394camera_t *camera, uint64_t offset,
+ /********************************************************************************/
+ /* Get/Set Advanced Features Registers                                          */
+ /********************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_get_adv_control_registers (dc1394camera_t *camera, uint64_t offset,
+                                   uint32_t *value, uint32_t num_regs)
+ {
+@@ -117,7 +118,7 @@ dc1394_get_adv_control_registers (dc1394camera_t *camera, uint64_t offset,
+         camera->advanced_features_csr + offset, value, num_regs);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_set_adv_control_registers (dc1394camera_t *camera, uint64_t offset,
+                                   const uint32_t *value, uint32_t num_regs)
+ {
+@@ -129,7 +130,7 @@ dc1394_set_adv_control_registers (dc1394camera_t *camera, uint64_t offset,
+ /* Get/Set Format_7 Registers                                                   */
+ /********************************************************************************/
+ 
+-dc1394error_t
++static dc1394error_t
+ QueryFormat7CSROffset(dc1394camera_t *camera, dc1394video_mode_t mode, uint64_t *offset)
+ {
+     int retval;
+@@ -148,7 +149,7 @@ QueryFormat7CSROffset(dc1394camera_t *camera, dc1394video_mode_t mode, uint64_t
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_get_format7_register(dc1394camera_t *camera, unsigned int mode, uint64_t offset, uint32_t *value)
+ {
+     if (camera == NULL)
+@@ -171,7 +172,7 @@ dc1394_get_format7_register(dc1394camera_t *camera, unsigned int mode, uint64_t
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_set_format7_register(dc1394camera_t *camera, unsigned int mode, uint64_t offset, uint32_t value)
+ {
+     if (camera == NULL)
+@@ -194,7 +195,7 @@ dc1394_set_format7_register(dc1394camera_t *camera, unsigned int mode, uint64_t
+ /* Get/Set Absolute Control Registers                                           */
+ /********************************************************************************/
+ 
+-dc1394error_t
++static dc1394error_t
+ QueryAbsoluteCSROffset(dc1394camera_t *camera, dc1394feature_t feature, uint64_t *offset)
+ {
+     int absoffset, retval;
+@@ -211,7 +212,7 @@ QueryAbsoluteCSROffset(dc1394camera_t *camera, dc1394feature_t feature, uint64_t
+ 
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_get_absolute_register(dc1394camera_t *camera, unsigned int feature,
+         uint64_t offset, uint32_t *value)
+ {
+@@ -224,7 +225,7 @@ dc1394_get_absolute_register(dc1394camera_t *camera, unsigned int feature,
+     return dc1394_get_registers (camera, absoffset + offset, value, 1);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_set_absolute_register(dc1394camera_t *camera, unsigned int feature,
+         uint64_t offset, uint32_t value)
+ {
+@@ -241,14 +242,14 @@ dc1394_set_absolute_register(dc1394camera_t *camera, unsigned int feature,
+ /* Get/Set PIO Feature Registers                                                */
+ /********************************************************************************/
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_get_PIO_register(dc1394camera_t *camera, uint64_t offset, uint32_t *value)
+ {
+     return dc1394_get_registers (camera, camera->PIO_control_csr + offset,
+             value, 1);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_set_PIO_register(dc1394camera_t *camera, uint64_t offset, uint32_t value)
+ {
+     return dc1394_set_registers (camera, camera->PIO_control_csr + offset,
+@@ -260,14 +261,14 @@ dc1394_set_PIO_register(dc1394camera_t *camera, uint64_t offset, uint32_t value)
+ /* Get/Set SIO Feature Registers                                                */
+ /********************************************************************************/
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_get_SIO_register(dc1394camera_t *camera, uint64_t offset, uint32_t *value)
+ {
+     return dc1394_get_registers (camera, camera->SIO_control_csr + offset,
+             value, 1);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_set_SIO_register(dc1394camera_t *camera, uint64_t offset, uint32_t value)
+ {
+     return dc1394_set_registers (camera, camera->SIO_control_csr + offset,
+@@ -278,7 +279,7 @@ dc1394_set_SIO_register(dc1394camera_t *camera, uint64_t offset, uint32_t value)
+ /********************************************************************************/
+ /* Get/Set Strobe Feature Registers                                             */
+ /********************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_get_strobe_register(dc1394camera_t *camera, uint64_t offset,
+         uint32_t *value)
+ {
+@@ -286,7 +287,7 @@ dc1394_get_strobe_register(dc1394camera_t *camera, uint64_t offset,
+             value, 1);
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_set_strobe_register(dc1394camera_t *camera, uint64_t offset,
+         uint32_t value)
+ {
+diff --git a/libdc1394/dc1394/usb/capture.c b/libdc1394/dc1394/usb/capture.c
+index 6e085a1..22827fd 100644
+--- a/libdc1394/dc1394/usb/capture.c
++++ b/libdc1394/dc1394/usb/capture.c
+@@ -28,6 +28,7 @@
+ #include <unistd.h>
+ 
+ #include "usb/usb.h"
++#include "visibility.h"
+ 
+ /* Callback whenever a bulk transfer finishes. */
+ static void
+@@ -98,7 +99,7 @@ init_frame(platform_camera_t *craw, int index, dc1394video_frame_t *proto)
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_usb_capture_setup(platform_camera_t *craw, uint32_t num_dma_buffers,
+         uint32_t flags)
+ {
+@@ -223,7 +224,7 @@ dc1394_usb_capture_setup(platform_camera_t *craw, uint32_t num_dma_buffers,
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_usb_capture_stop(platform_camera_t *craw)
+ {
+     dc1394camera_t * camera = craw->camera;
+@@ -296,7 +297,7 @@ dc1394_usb_capture_stop(platform_camera_t *craw)
+ 
+ #define NEXT_BUFFER(c,i) (((i) == -1) ? 0 : ((i)+1)%(c)->num_frames)
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_usb_capture_dequeue (platform_camera_t * craw,
+         dc1394capture_policy_t policy, dc1394video_frame_t **frame_return)
+ {
+@@ -345,7 +346,7 @@ dc1394_usb_capture_dequeue (platform_camera_t * craw,
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_usb_capture_enqueue (platform_camera_t * craw,
+         dc1394video_frame_t * frame)
+ {
+@@ -371,7 +372,7 @@ dc1394_usb_capture_enqueue (platform_camera_t * craw,
+     return DC1394_SUCCESS;
+ }
+ 
+-int
++DLL_PUBLIC int
+ dc1394_usb_capture_get_fileno (platform_camera_t * craw)
+ {
+     if (craw->notify_pipe[0] == 0 && craw->notify_pipe[1] == 0)
+@@ -380,7 +381,7 @@ dc1394_usb_capture_get_fileno (platform_camera_t * craw)
+     return craw->notify_pipe[0];
+ }
+ 
+-dc1394bool_t
++DLL_PUBLIC dc1394bool_t
+ dc1394_usb_capture_is_frame_corrupt (platform_camera_t * craw,
+         dc1394video_frame_t * frame)
+ {
+diff --git a/libdc1394/dc1394/usb/control.c b/libdc1394/dc1394/usb/control.c
+index 6509452..96dac11 100644
+--- a/libdc1394/dc1394/usb/control.c
++++ b/libdc1394/dc1394/usb/control.c
+@@ -29,7 +29,7 @@
+ #include "platform.h"
+ #include "internal.h"
+ #include "usb.h"
+-
++#include "visibility.h"
+ 
+ static platform_t *
+ dc1394_usb_new (void)
+@@ -377,7 +377,7 @@ usb_dispatch = {
+     .capture_is_frame_corrupt = dc1394_usb_capture_is_frame_corrupt,
+ };
+ 
+-void
++DLL_LOCAL void
+ usb_init(dc1394_t * d)
+ {
+     register_platform (d, &usb_dispatch, "usb");
+diff --git a/libdc1394/dc1394/utils.c b/libdc1394/dc1394/utils.c
+index b7ec0ec..cffd36c 100644
+--- a/libdc1394/dc1394/utils.c
++++ b/libdc1394/dc1394/utils.c
+@@ -21,6 +21,7 @@
+  */
+ 
+ #include "internal.h"
++#include "visibility.h"
+ 
+ const char *dc1394_feature_desc[DC1394_FEATURE_NUM] = {
+     "Brightness",
+@@ -90,7 +91,7 @@ const char *dc1394_error_strings[DC1394_ERROR_NUM] = {
+     "Basler error: unknown SFF chunk"
+ };
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_get_image_size_from_video_mode(dc1394camera_t *camera, dc1394video_mode_t video_mode, uint32_t *w, uint32_t *h)
+ {
+     dc1394error_t err;
+@@ -160,7 +161,7 @@ dc1394_get_image_size_from_video_mode(dc1394camera_t *camera, dc1394video_mode_t
+ }
+ 
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_framerate_as_float(dc1394framerate_t framerate_enum, float *framerate)
+ {
+     switch(framerate_enum)  {
+@@ -192,7 +193,7 @@ dc1394_framerate_as_float(dc1394framerate_t framerate_enum, float *framerate)
+     return DC1394_INVALID_FRAMERATE;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_is_color(dc1394color_coding_t color_coding, dc1394bool_t *is_color)
+ {
+     switch(color_coding)  {
+@@ -215,7 +216,7 @@ dc1394_is_color(dc1394color_coding_t color_coding, dc1394bool_t *is_color)
+     return DC1394_INVALID_COLOR_CODING;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_get_color_coding_data_depth(dc1394color_coding_t color_coding, uint32_t * bits)
+ {
+     switch(color_coding) {
+@@ -239,7 +240,7 @@ dc1394_get_color_coding_data_depth(dc1394color_coding_t color_coding, uint32_t *
+     return DC1394_INVALID_COLOR_CODING;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_get_color_coding_bit_size(dc1394color_coding_t color_coding, uint32_t* bits)
+ {
+     switch(color_coding) {
+@@ -268,7 +269,7 @@ dc1394_get_color_coding_bit_size(dc1394color_coding_t color_coding, uint32_t* bi
+     return DC1394_INVALID_COLOR_CODING;
+ }
+ 
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_get_color_coding_from_video_mode(dc1394camera_t *camera, dc1394video_mode_t video_mode, dc1394color_coding_t *color_coding)
+ {
+     dc1394error_t err;
+@@ -334,25 +335,25 @@ dc1394_get_color_coding_from_video_mode(dc1394camera_t *camera, dc1394video_mode
+     return DC1394_FAILURE;
+ }
+ 
+-dc1394bool_t
++DLL_PUBLIC dc1394bool_t
+ dc1394_is_video_mode_scalable(dc1394video_mode_t video_mode)
+ {
+     return ((video_mode>=DC1394_VIDEO_MODE_FORMAT7_MIN)&&(video_mode<=DC1394_VIDEO_MODE_FORMAT7_MAX));
+ }
+ 
+-dc1394bool_t
++DLL_PUBLIC dc1394bool_t
+ dc1394_is_video_mode_still_image(dc1394video_mode_t video_mode)
+ {
+     return ((video_mode>=DC1394_VIDEO_MODE_FORMAT6_MIN)&&(video_mode<=DC1394_VIDEO_MODE_FORMAT6_MAX));
+ }
+ 
+-dc1394bool_t
++DLL_PUBLIC dc1394bool_t
+ dc1394_is_same_camera(dc1394camera_id_t id1, dc1394camera_id_t id2)
+ {
+     return ((id1.guid==id2.guid)&&(id1.unit==id2.unit));
+ }
+ 
+-const char *
++DLL_PUBLIC const char *
+ dc1394_feature_get_string(dc1394feature_t feature)
+ {
+     if ((feature>DC1394_FEATURE_MAX)||(feature<DC1394_FEATURE_MIN))
+@@ -361,7 +362,7 @@ dc1394_feature_get_string(dc1394feature_t feature)
+     return dc1394_feature_desc[feature-DC1394_FEATURE_MIN];
+ }
+ 
+-const char *
++DLL_PUBLIC const char *
+ dc1394_error_get_string(dc1394error_t error)
+ {
+ 
+@@ -380,7 +381,7 @@ dc1394_error_get_string(dc1394error_t error)
+  * Version : 16/02/2005
+  */
+ 
+-uint16_t
++DLL_PUBLIC DLL_PUBLIC uint16_t
+ dc1394_checksum_crc16 (const uint8_t* buffer, uint32_t buffer_size)
+ {
+     uint32_t i, j, c, bit;
+diff --git a/libdc1394/dc1394/vendor/avt.c b/libdc1394/dc1394/vendor/avt.c
+index eb91f11..dbf0daf 100644
+--- a/libdc1394/dc1394/vendor/avt.c
++++ b/libdc1394/dc1394/vendor/avt.c
+@@ -26,6 +26,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include "vendor/avt.h"
++#include "visibility.h"
+ 
+ /********************************************************/
+ /* Configuration Register Offsets for Advances features */
+@@ -96,7 +97,7 @@
+ /************************************************************************/
+ /* Get Version          (Read Only)                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_version(dc1394camera_t *camera,
+                        uint32_t *UCType, uint32_t *Version,
+                        uint32_t *Camera_ID, uint32_t *FPGA_Version)
+@@ -127,7 +128,7 @@ dc1394_avt_get_version(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Get Advanced feature inquiry                                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_advanced_feature_inquiry(dc1394camera_t *camera,
+                                         dc1394_avt_adv_feature_info_t *adv_feature)
+ {
+@@ -207,7 +208,7 @@ dc1394_avt_get_advanced_feature_inquiry(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Print Advanced features                                                 */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_print_advanced_feature(dc1394_avt_adv_feature_info_t *adv_feature)
+ {
+ 
+@@ -271,7 +272,7 @@ dc1394_avt_print_advanced_feature(dc1394_avt_adv_feature_info_t *adv_feature)
+ /************************************************************************/
+ /* Get shading mode                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_shading(dc1394camera_t *camera,
+                        dc1394bool_t *on_off, dc1394bool_t *compute,
+                        dc1394bool_t *show, uint32_t *frame_nb)
+@@ -307,7 +308,7 @@ dc1394_avt_get_shading(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Set shading mode                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_shading(dc1394camera_t *camera,
+                        dc1394bool_t on_off, dc1394bool_t compute,
+                        dc1394bool_t show, uint32_t frame_nb)
+@@ -343,7 +344,7 @@ dc1394_avt_set_shading(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Get shading  mem ctrl                                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_shading_mem_ctrl(dc1394camera_t *camera, dc1394bool_t *en_write,
+                                 dc1394bool_t *en_read, uint32_t *addroffset)
+ {
+@@ -373,7 +374,7 @@ dc1394_avt_get_shading_mem_ctrl(dc1394camera_t *camera, dc1394bool_t *en_write,
+ /************************************************************************/
+ /* Set shading mem ctrl                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_shading_mem_ctrl(dc1394camera_t *camera,
+                                 dc1394bool_t en_write, dc1394bool_t en_read, uint32_t addroffset)
+ {
+@@ -403,7 +404,7 @@ dc1394_avt_set_shading_mem_ctrl(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Get shading  info                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_shading_info(dc1394camera_t *camera, uint32_t *MaxImageSize)
+ {
+     dc1394error_t err;
+@@ -424,7 +425,7 @@ dc1394_avt_get_shading_info(dc1394camera_t *camera, uint32_t *MaxImageSize)
+ /************************************************************************/
+ /* Get Multiple slope parameters        (HDR)                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_multiple_slope(dc1394camera_t *camera,
+                               dc1394bool_t *on_off, uint32_t *points_nb,uint32_t *kneepoint1,
+                               uint32_t *kneepoint2, uint32_t *kneepoint3)
+@@ -458,7 +459,7 @@ dc1394_avt_get_multiple_slope(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Set Multiple slope parameters                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_multiple_slope(dc1394camera_t *camera,
+                               dc1394bool_t on_off, uint32_t points_nb, uint32_t kneepoint1,
+                               uint32_t kneepoint2, uint32_t kneepoint3)
+@@ -495,7 +496,7 @@ dc1394_avt_set_multiple_slope(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Get Shutter Timebase                                                 */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_timebase(dc1394camera_t *camera, uint32_t *timebase_id)
+ {
+     dc1394error_t err;
+@@ -515,7 +516,7 @@ dc1394_avt_get_timebase(dc1394camera_t *camera, uint32_t *timebase_id)
+ /************************************************************************/
+ /* Set Shutter Timebase (acquisition must be stopped)                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_timebase(dc1394camera_t *camera, uint32_t timebase_id)
+ {
+     dc1394error_t err;
+@@ -538,7 +539,7 @@ dc1394_avt_set_timebase(dc1394camera_t *camera, uint32_t timebase_id)
+ /************************************************************************/
+ /* Get Extented Shutter                                                  */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_extented_shutter(dc1394camera_t *camera, uint32_t *timebase_id)
+ {
+     dc1394error_t err;
+@@ -559,7 +560,7 @@ dc1394_avt_get_extented_shutter(dc1394camera_t *camera, uint32_t *timebase_id)
+ /************************************************************************/
+ /* Set Extented shutter                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_extented_shutter(dc1394camera_t *camera, uint32_t timebase_id)
+ {
+     dc1394error_t err;
+@@ -583,7 +584,7 @@ dc1394_avt_set_extented_shutter(dc1394camera_t *camera, uint32_t timebase_id)
+ /************************************************************************/
+ /* Get MaxResolution          (Read Only)                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_MaxResolution(dc1394camera_t *camera, uint32_t *MaxHeight, uint32_t *MaxWidth)
+ {
+     dc1394error_t err;
+@@ -605,7 +606,7 @@ dc1394_avt_get_MaxResolution(dc1394camera_t *camera, uint32_t *MaxHeight, uint32
+ /************************************************************************/
+ /* Get Auto Shutter                                                          */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_auto_shutter(dc1394camera_t *camera, uint32_t *MinValue, uint32_t *MaxValue)
+ {
+     dc1394error_t err;
+@@ -630,7 +631,7 @@ dc1394_avt_get_auto_shutter(dc1394camera_t *camera, uint32_t *MinValue, uint32_t
+ /************************************************************************/
+ /* Set Auto shutter                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_auto_shutter(dc1394camera_t *camera, uint32_t MinValue, uint32_t MaxValue)
+ {
+     dc1394error_t err;
+@@ -649,7 +650,7 @@ dc1394_avt_set_auto_shutter(dc1394camera_t *camera, uint32_t MinValue, uint32_t
+ /************************************************************************/
+ /* Get Auto Gain                                                          */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_auto_gain(dc1394camera_t *camera, uint32_t *MinValue, uint32_t *MaxValue)
+ {
+     dc1394error_t err;
+@@ -671,7 +672,7 @@ dc1394_avt_get_auto_gain(dc1394camera_t *camera, uint32_t *MinValue, uint32_t *M
+ /************************************************************************/
+ /* Set Auto gain                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_auto_gain(dc1394camera_t *camera, uint32_t MinValue, uint32_t MaxValue)
+ {
+     dc1394error_t err;
+@@ -691,7 +692,7 @@ dc1394_avt_set_auto_gain(dc1394camera_t *camera, uint32_t MinValue, uint32_t Max
+ /************************************************************************/
+ /* Get Trigger delay                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_trigger_delay(dc1394camera_t *camera, dc1394bool_t *on_off, uint32_t *DelayTime)
+ {
+     dc1394error_t err;
+@@ -714,7 +715,7 @@ dc1394_avt_get_trigger_delay(dc1394camera_t *camera, dc1394bool_t *on_off, uint3
+ /************************************************************************/
+ /* Set Trigger delay                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_trigger_delay(dc1394camera_t *camera, dc1394bool_t on_off, uint32_t DelayTime)
+ {
+     dc1394error_t err;
+@@ -741,7 +742,7 @@ dc1394_avt_set_trigger_delay(dc1394camera_t *camera, dc1394bool_t on_off, uint32
+ /************************************************************************/
+ /* Get Mirror                                                                 */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_mirror(dc1394camera_t *camera, dc1394bool_t *on_off)
+ {
+     dc1394error_t err;
+@@ -760,7 +761,7 @@ dc1394_avt_get_mirror(dc1394camera_t *camera, dc1394bool_t *on_off)
+ /************************************************************************/
+ /* Set Mirror                                                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_mirror(dc1394camera_t *camera, dc1394bool_t on_off)
+ {
+     dc1394error_t err;
+@@ -779,7 +780,7 @@ dc1394_avt_set_mirror(dc1394camera_t *camera, dc1394bool_t on_off)
+ /************************************************************************/
+ /* Get DSNU                                                                 */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_dsnu(dc1394camera_t *camera, dc1394bool_t *on_off,uint32_t *frame_nb)
+ {
+     dc1394error_t err;
+@@ -800,7 +801,7 @@ dc1394_avt_get_dsnu(dc1394camera_t *camera, dc1394bool_t *on_off,uint32_t *frame
+ /************************************************************************/
+ /* Set DSNU                                                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_dsnu(dc1394camera_t *camera,
+                     dc1394bool_t on_off, dc1394bool_t compute, uint32_t frame_nb)
+ {
+@@ -838,7 +839,7 @@ dc1394_avt_set_dsnu(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Get BLEMISH                                                                 */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_blemish(dc1394camera_t *camera, dc1394bool_t *on_off, uint32_t *frame_nb)
+ {
+     dc1394error_t err;
+@@ -859,7 +860,7 @@ dc1394_avt_get_blemish(dc1394camera_t *camera, dc1394bool_t *on_off, uint32_t *f
+ /************************************************************************/
+ /* Set BLEMISH                                                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_blemish(dc1394camera_t *camera,
+                        dc1394bool_t on_off, dc1394bool_t compute, uint32_t frame_nb)
+ {
+@@ -900,7 +901,7 @@ dc1394_avt_set_blemish(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Get IO   REG_CAMERA_AVT_IO_INP_CTRLx        or REG_CAMERA_AVT_IO_OUTP_CTRLx        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_io(dc1394camera_t *camera, uint32_t IO,
+                   dc1394bool_t *polarity, uint32_t *mode, dc1394bool_t *pinstate)
+ {
+@@ -926,7 +927,7 @@ dc1394_avt_get_io(dc1394camera_t *camera, uint32_t IO,
+ /************************************************************************/
+ /* Set IO   REG_CAMERA_AVT_IO_INP_CTRLx        or REG_CAMERA_AVT_IO_OUTP_CTRLx        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_io(dc1394camera_t *camera,uint32_t IO,
+                   dc1394bool_t polarity, uint32_t mode, dc1394bool_t pinstate)
+ {
+@@ -957,7 +958,7 @@ dc1394_avt_set_io(dc1394camera_t *camera,uint32_t IO,
+ /************************************************************************/
+ /* BusReset IEEE1394                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_reset(dc1394camera_t *camera)
+ {
+     dc1394error_t err;
+@@ -975,7 +976,7 @@ dc1394_avt_reset(dc1394camera_t *camera)
+ /************************************************************************/
+ /* Get Lookup Tables (LUT)                                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_lut(dc1394camera_t *camera, dc1394bool_t *on_off, uint32_t *lutnb)
+ {
+     dc1394error_t err;
+@@ -998,7 +999,7 @@ dc1394_avt_get_lut(dc1394camera_t *camera, dc1394bool_t *on_off, uint32_t *lutnb
+ /************************************************************************/
+ /* Set Lookup Tables (LUT)                                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_lut(dc1394camera_t *camera, dc1394bool_t on_off, uint32_t lutnb)
+ {
+     dc1394error_t err;
+@@ -1025,7 +1026,7 @@ dc1394_avt_set_lut(dc1394camera_t *camera, dc1394bool_t on_off, uint32_t lutnb)
+ /************************************************************************/
+ /* Get LUT ctrl                                                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_lut_mem_ctrl(dc1394camera_t *camera, dc1394bool_t *en_write,
+                             uint32_t * AccessLutNo,uint32_t *addroffset)
+ {
+@@ -1052,7 +1053,7 @@ dc1394_avt_get_lut_mem_ctrl(dc1394camera_t *camera, dc1394bool_t *en_write,
+ /************************************************************************/
+ /* Set LUT ctrl                                                                 */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_lut_mem_ctrl(dc1394camera_t *camera,
+                             dc1394bool_t en_write, uint32_t AccessLutNo, uint32_t addroffset)
+ {
+@@ -1083,7 +1084,7 @@ dc1394_avt_set_lut_mem_ctrl(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Get LUT  info                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_lut_info(dc1394camera_t *camera, uint32_t *NumOfLuts, uint32_t *MaxLutSize)
+ {
+     dc1394error_t err;
+@@ -1106,7 +1107,7 @@ dc1394_avt_get_lut_info(dc1394camera_t *camera, uint32_t *NumOfLuts, uint32_t *M
+ /************************************************************************/
+ /* Get Automatic white balance        with Area Of Interest AOI                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_aoi(dc1394camera_t *camera,
+                    dc1394bool_t *on_off, int *left, int *top, int *width, int *height)
+ {
+@@ -1144,7 +1145,7 @@ dc1394_avt_get_aoi(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Set Automatic white balance with Area Of Interest AOI                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_aoi(dc1394camera_t *camera,
+                    dc1394bool_t on_off,int left, int top, int width, int height)
+ {
+@@ -1172,7 +1173,7 @@ dc1394_avt_set_aoi(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Get test_images                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_test_images(dc1394camera_t *camera, uint32_t *image_no)
+ {
+     dc1394error_t err;
+@@ -1192,7 +1193,7 @@ dc1394_avt_get_test_images(dc1394camera_t *camera, uint32_t *image_no)
+ /************************************************************************/
+ /* Set test_images                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_test_images(dc1394camera_t *camera, uint32_t image_no)
+ {
+     dc1394error_t err;
+@@ -1216,7 +1217,7 @@ dc1394_avt_set_test_images(dc1394camera_t *camera, uint32_t image_no)
+ /************************************************************************/
+ /* Get frame info                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_frame_info(dc1394camera_t *camera, uint32_t *framecounter)
+ {
+     dc1394error_t err;
+@@ -1236,7 +1237,7 @@ dc1394_avt_get_frame_info(dc1394camera_t *camera, uint32_t *framecounter)
+ /************************************************************************/
+ /* Reset frame info                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_reset_frame_info(dc1394camera_t *camera)
+ {
+     dc1394error_t err;
+@@ -1250,7 +1251,7 @@ dc1394_avt_reset_frame_info(dc1394camera_t *camera)
+ /************************************************************************/
+ /* Get Deferred image transport                                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_deferred_trans(dc1394camera_t *camera,
+                               dc1394bool_t *HoldImage, dc1394bool_t * FastCapture,
+                               uint32_t *FifoSize, uint32_t *NumOfImages )
+@@ -1281,7 +1282,7 @@ dc1394_avt_get_deferred_trans(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Set Deferred image transport                                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_set_deferred_trans(dc1394camera_t *camera,
+                               dc1394bool_t HoldImage, dc1394bool_t FastCapture,
+                               uint32_t FifoSize, uint32_t NumOfImages,
+@@ -1321,7 +1322,7 @@ dc1394_avt_set_deferred_trans(dc1394camera_t *camera,
+ /************************************************************************/
+ /* Get GPData info                                                        */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_get_gpdata_info(dc1394camera_t *camera, uint32_t *BufferSize)
+ {
+     dc1394error_t err;
+@@ -1371,7 +1372,7 @@ static void gpdata_io_common(uint32_t *buf_local, uint32_t gpdata_numquads,
+ /************************************************************************/
+ /* Read size number of bytes from GPData buffer                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_read_gpdata(dc1394camera_t *camera, unsigned char *buf, uint32_t size)
+ {
+     uint32_t gpdata_numquads, gpdata_bufsize;
+@@ -1423,7 +1424,7 @@ dc1394_avt_read_gpdata(dc1394camera_t *camera, unsigned char *buf, uint32_t size
+ /************************************************************************/
+ /* Write size number of bytes to GPData buffer                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_write_gpdata(dc1394camera_t *camera, unsigned char *buf, uint32_t size)
+ {
+     uint32_t gpdata_bufsize, gpdata_numquads;
+@@ -1475,7 +1476,7 @@ dc1394_avt_write_gpdata(dc1394camera_t *camera, unsigned char *buf, uint32_t siz
+ /************************************************************************/
+ /* Read shading image from camera into buffer                               */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_read_shading_img(dc1394camera_t *camera, unsigned char *buf,
+                             uint32_t size)
+ {
+@@ -1506,7 +1507,7 @@ dc1394_avt_read_shading_img(dc1394camera_t *camera, unsigned char *buf,
+ /************************************************************************/
+ /* Write shading image from buffer to camera                                */
+ /************************************************************************/
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_avt_write_shading_img(dc1394camera_t *camera, unsigned char *buf,
+                              uint32_t size)
+ {
+@@ -1536,7 +1537,7 @@ dc1394_avt_write_shading_img(dc1394camera_t *camera, unsigned char *buf,
+ /************************************************************************/
+ /* Read channel adjust (AVT Pike)                                           */
+ /************************************************************************/
+-dc1394error_t dc1394_avt_get_channel_adjust(dc1394camera_t *camera, int16_t *channel_adjust)
++DLL_PUBLIC dc1394error_t dc1394_avt_get_channel_adjust(dc1394camera_t *camera, int16_t *channel_adjust)
+ {
+     dc1394error_t err;
+     uint32_t value;
+@@ -1554,7 +1555,7 @@ dc1394error_t dc1394_avt_get_channel_adjust(dc1394camera_t *camera, int16_t *cha
+ /************************************************************************/
+ /* Write channel adjust (AVT Pike)                                           */
+ /************************************************************************/
+-dc1394error_t dc1394_avt_set_channel_adjust(dc1394camera_t *camera, int16_t channel_adjust)
++DLL_PUBLIC dc1394error_t dc1394_avt_set_channel_adjust(dc1394camera_t *camera, int16_t channel_adjust)
+ {
+     dc1394error_t err;
+ 
+@@ -1569,7 +1570,7 @@ dc1394error_t dc1394_avt_set_channel_adjust(dc1394camera_t *camera, int16_t chan
+ /* Set Color Correction + Coefficients                                          */
+ /************************************************************************/
+ 
+-dc1394error_t dc1394_avt_set_color_corr(dc1394camera_t *camera, dc1394bool_t on_off, dc1394bool_t reset, int32_t Crr, int32_t Cgr, int32_t Cbr, int32_t Crg, int32_t Cgg, int32_t Cbg, int32_t Crb, int32_t Cgb, int32_t Cbb)
++DLL_PUBLIC dc1394error_t dc1394_avt_set_color_corr(dc1394camera_t *camera, dc1394bool_t on_off, dc1394bool_t reset, int32_t Crr, int32_t Cgr, int32_t Cbr, int32_t Crg, int32_t Cgg, int32_t Cbg, int32_t Crb, int32_t Cgb, int32_t Cbb)
+ {
+     dc1394error_t err;
+     uint32_t curval;
+@@ -1628,7 +1629,7 @@ dc1394error_t dc1394_avt_set_color_corr(dc1394camera_t *camera, dc1394bool_t on_
+ /* Get Color Correction + Coefficients                                            */
+ /************************************************************************/
+ 
+-dc1394error_t dc1394_avt_get_color_corr(dc1394camera_t *camera, dc1394bool_t *on_off, int32_t *Crr, int32_t *Cgr, int32_t *Cbr, int32_t *Crg, int32_t *Cgg, int32_t *Cbg, int32_t *Crb, int32_t *Cgb, int32_t *Cbb)
++DLL_PUBLIC dc1394error_t dc1394_avt_get_color_corr(dc1394camera_t *camera, dc1394bool_t *on_off, int32_t *Crr, int32_t *Cgr, int32_t *Cbr, int32_t *Crg, int32_t *Cgg, int32_t *Cbg, int32_t *Crb, int32_t *Cgb, int32_t *Cbb)
+ {
+     dc1394error_t err;
+     uint32_t value;
+@@ -1677,7 +1678,7 @@ dc1394error_t dc1394_avt_get_color_corr(dc1394camera_t *camera, dc1394bool_t *on
+ /* Get HSNR                                                                   */
+ /************************************************************************/
+ 
+-dc1394error_t dc1394_avt_get_hsnr(dc1394camera_t *camera, dc1394bool_t *on_off, uint32_t *grabCount)
++DLL_PUBLIC dc1394error_t dc1394_avt_get_hsnr(dc1394camera_t *camera, dc1394bool_t *on_off, uint32_t *grabCount)
+ {
+     dc1394error_t err;
+     uint32_t value;
+@@ -1700,7 +1701,7 @@ dc1394error_t dc1394_avt_get_hsnr(dc1394camera_t *camera, dc1394bool_t *on_off,
+ /* Set HSNR                                                                      */
+ /************************************************************************/
+ 
+-dc1394error_t dc1394_avt_set_hsnr(dc1394camera_t *camera, dc1394bool_t on_off, uint32_t grabCount)
++DLL_PUBLIC dc1394error_t dc1394_avt_set_hsnr(dc1394camera_t *camera, dc1394bool_t on_off, uint32_t grabCount)
+ {
+     dc1394error_t err;
+     uint32_t curval;
+diff --git a/libdc1394/dc1394/vendor/basler.c b/libdc1394/dc1394/vendor/basler.c
+index b3ce8e7..316f4a8 100644
+--- a/libdc1394/dc1394/vendor/basler.c
++++ b/libdc1394/dc1394/vendor/basler.c
+@@ -30,6 +30,7 @@
+ #include "../control.h"
+ #include "basler.h"
+ #include "basler_sff_registry.h"
++#include "../visibility.h"
+ 
+ /*
+  * BASLER CONTROL REGISTERS
+@@ -46,7 +47,7 @@
+ /*
+  * Private functions
+  */
+-dc1394error_t
++static dc1394error_t
+ get_sff_address_from_csr_guid (dc1394camera_t* camera, const dc1394basler_sff_guid_t* feature_guid, uint64_t* address)
+ {
+     dc1394error_t err;
+@@ -96,7 +97,7 @@ get_sff_address_from_csr_guid (dc1394camera_t* camera, const dc1394basler_sff_gu
+ /*
+  * Tests whether the camera supports Basler SFF
+  */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_basler_sff_is_available (dc1394camera_t* camera, dc1394bool_t *available)
+ {
+     uint32_t data;
+@@ -137,7 +138,7 @@ dc1394_basler_sff_is_available (dc1394camera_t* camera, dc1394bool_t *available)
+ /**
+  * Tests whether the camera supports the specified SFF feature
+  */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_basler_sff_feature_is_available (dc1394camera_t* camera, dc1394basler_sff_feature_t feature_id, dc1394bool_t *available)
+ {
+     const sff_feature *feature_desc = NULL;
+@@ -177,7 +178,7 @@ dc1394_basler_sff_feature_is_available (dc1394camera_t* camera, dc1394basler_sff
+ /*
+  * enables a specific SFF feature
+  */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_basler_sff_feature_enable (dc1394camera_t* camera, dc1394basler_sff_feature_t feature_id, dc1394switch_t on_off)
+ {
+     const sff_feature *feature_desc = NULL;
+@@ -246,7 +247,7 @@ dc1394_basler_sff_feature_enable (dc1394camera_t* camera, dc1394basler_sff_featu
+ /*
+  * check if a feature is enabled or not
+  */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_basler_sff_feature_is_enabled (dc1394camera_t* camera, dc1394basler_sff_feature_t feature_id, dc1394bool_t *is_enabled)
+ {
+     const sff_feature *feature_desc = NULL;
+@@ -290,7 +291,7 @@ dc1394_basler_sff_feature_is_enabled (dc1394camera_t* camera, dc1394basler_sff_f
+ /*
+  * print a feature
+  */
+-dc1394error_t
++DLL_PUBLIC dc1394error_t
+ dc1394_basler_sff_feature_print (dc1394camera_t* camera, dc1394basler_sff_feature_t feature_id, FILE *fd)
+ {
+     dc1394error_t err;
+@@ -355,7 +356,7 @@ dc1394_basler_sff_feature_print (dc1394camera_t* camera, dc1394basler_sff_featur
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394error_t dc1394_basler_sff_feature_print_all (dc1394camera_t* camera, FILE *fd)
++DLL_PUBLIC dc1394error_t dc1394_basler_sff_feature_print_all (dc1394camera_t* camera, FILE *fd)
+ {
+     uint32_t i = DC1394_BASLER_SFF_FEATURE_MIN;
+     while (i < DC1394_BASLER_SFF_FEATURE_MAX) {
+@@ -366,7 +367,7 @@ dc1394error_t dc1394_basler_sff_feature_print_all (dc1394camera_t* camera, FILE
+     return DC1394_SUCCESS;
+ }
+ 
+-dc1394bool_t dc1394_basler_sff_check_crc (const uint8_t* frame_buffer, uint32_t frame_size)
++DLL_PUBLIC dc1394bool_t dc1394_basler_sff_check_crc (const uint8_t* frame_buffer, uint32_t frame_size)
+ {
+     uint32_t current_crc, desired_crc;
+ 
+@@ -381,7 +382,7 @@ dc1394bool_t dc1394_basler_sff_check_crc (const uint8_t* frame_buffer, uint32_t
+ /*
+  * Initializes the struct for iterating
+  */
+-dc1394error_t dc1394_basler_sff_chunk_iterate_init (dc1394basler_sff_t* chunk, void *frame_buffer, uint32_t frame_size, dc1394bool_t has_crc_checksum)
++DLL_PUBLIC dc1394error_t dc1394_basler_sff_chunk_iterate_init (dc1394basler_sff_t* chunk, void *frame_buffer, uint32_t frame_size, dc1394bool_t has_crc_checksum)
+ {
+     if (chunk == NULL || frame_buffer == NULL || frame_size == 0)
+         return DC1394_FAILURE;
+@@ -403,7 +404,7 @@ dc1394error_t dc1394_basler_sff_chunk_iterate_init (dc1394basler_sff_t* chunk, v
+ /**
+  * Iterates over the available SFF chunks in the frame buffer
+  */
+-dc1394error_t dc1394_basler_sff_chunk_iterate (dc1394basler_sff_t* chunk)
++DLL_PUBLIC dc1394error_t dc1394_basler_sff_chunk_iterate (dc1394basler_sff_t* chunk)
+ {
+     dc1394basler_sff_chunk_tail_t* tail;
+     const sff_feature* feature_desc;
+@@ -446,7 +447,7 @@ dc1394error_t dc1394_basler_sff_chunk_iterate (dc1394basler_sff_t* chunk)
+ /**
+  * Finds a specific SFF chunk in the frame buffer
+  */
+-dc1394error_t dc1394_basler_sff_chunk_find (dc1394basler_sff_feature_t feature_id, void** chunk_data, void* frame_buffer, uint32_t frame_size, dc1394bool_t has_crc_checksum)
++DLL_PUBLIC dc1394error_t dc1394_basler_sff_chunk_find (dc1394basler_sff_feature_t feature_id, void** chunk_data, void* frame_buffer, uint32_t frame_size, dc1394bool_t has_crc_checksum)
+ {
+     dc1394basler_sff_t chunk;
+     dc1394bool_t found = DC1394_FALSE;
+diff --git a/libdc1394/dc1394/visibility.h b/libdc1394/dc1394/visibility.h
+new file mode 100644
+index 0000000..0a2602e
+--- /dev/null
++++ b/libdc1394/dc1394/visibility.h
+@@ -0,0 +1,31 @@
++
++#ifndef __DC1394_VISIBILITY_H__
++#define __DC1394_VISIBILITY_H__
++
++/* http://gcc.gnu.org/wiki/Visibility */
++#if defined _WIN32 || defined __CYGWIN__
++  #ifdef BUILDING_DLL
++    #ifdef __GNUC__
++      #define DLL_PUBLIC __attribute__ ((dllexport))
++    #else
++      #define DLL_PUBLIC __declspec(dllexport)
++    #endif
++  #else
++    #ifdef __GNUC__
++      #define DLL_PUBLIC __attribute__ ((dllimport))
++    #else
++      #define DLL_PUBLIC __declspec(dllimport)
++    #endif
++  #endif
++  #define DLL_LOCAL
++#else
++  #if __GNUC__ >= 4
++    #define DLL_PUBLIC __attribute__ ((visibility ("default")))
++    #define DLL_LOCAL  __attribute__ ((visibility ("hidden")))
++  #else
++    #define DLL_PUBLIC
++    #define DLL_LOCAL
++  #endif
++#endif
++
++#endif
