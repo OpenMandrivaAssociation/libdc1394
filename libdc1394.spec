@@ -55,7 +55,6 @@ This archive contains the header-files for libdc1394 development
 %patch1 -p0 -b .v4l
 
 %build
-autoreconf -fi
 %configure2_5x --disable-static
 %make
 
