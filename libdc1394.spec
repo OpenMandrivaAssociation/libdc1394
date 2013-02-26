@@ -4,8 +4,8 @@
 
 Summary:	Library for 1394 Digital Camera Specification
 Name:		libdc1394
-Version:	2.1.3
-Release:	5
+Version:	2.2.0
+Release:	1
 License:	GPLv2+
 Group:		System/Libraries
 URL:		http://sourceforge.net/projects/libdc1394/
@@ -24,7 +24,7 @@ interface for application developers who wish to control IEEE 1394 based
 cameras that conform to the 1394-based Digital Camera Specification (found at
 http://www.1394ta.org/).
 
-%package -n 	%{libname}
+%package -n %{libname}
 Summary:	Dynamic library from libdc1394
 Group:		System/Libraries
 Provides:	libdc1394
@@ -35,7 +35,7 @@ interface for application developers who wish to control IEEE 1394 based
 cameras that conform to the 1394-based Digital Camera Specification (found at
 http://www.1394ta.org/).
 
-%package -n 	%{develname}
+%package -n %{develname}
 Summary:	Development components for libdc1394
 Group:		Development/C
 Requires:	%{libname} = %{version}-%{release}
@@ -67,10 +67,10 @@ autoreconf -fi
 %makeinstall_std
 
 %files -n %{libname}
-%doc AUTHORS ChangeLog NEWS README
 %{_libdir}/*.so.%{major}*
 
 %files -n %{develname}
+%doc AUTHORS ChangeLog NEWS README
 %{_bindir}/dc1394_vloopback
 %{_bindir}/dc1394_reset_bus
 %{_includedir}/dc1394
