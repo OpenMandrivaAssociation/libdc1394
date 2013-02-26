@@ -11,7 +11,6 @@ Group:		System/Libraries
 URL:		http://sourceforge.net/projects/libdc1394/
 Source0:	http://downloads.sourceforge.net/libdc1394/%{name}-%{version}.tar.gz
 Patch1:		libdc1394-2.1.2-videodev.h.patch
-Patch2:		libdc1394-2.1.2-visibility.patch
 BuildRequires:	pkgconfig(libraw1394)
 BuildRequires:	pkgconfig(libusb-1.0)
 BuildRequires:	pkgconfig(libv4l2)
@@ -54,7 +53,6 @@ This archive contains the header-files for libdc1394 development
 %prep
 %setup -q
 %patch1 -p0 -b .v4l
-%patch2 -p2 -b .visibility
 
 %build
 autoreconf -fi
