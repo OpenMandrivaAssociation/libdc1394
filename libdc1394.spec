@@ -68,8 +68,7 @@ This archive contains the header-files for libdc1394 development
 
 %files -n %{develname}
 %doc AUTHORS ChangeLog NEWS README
-%{_bindir}/dc1394_vloopback
-%{_bindir}/dc1394_reset_bus
+%{_bindir}/dc1394_*
 %{_includedir}/dc1394
 %{_libdir}/*.so
 %{_libdir}/pkgconfig/*.pc
