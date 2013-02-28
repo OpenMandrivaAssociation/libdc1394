@@ -10,6 +10,7 @@ License:	GPLv2+
 Group:		System/Libraries
 URL:		http://sourceforge.net/projects/libdc1394/
 Source0:	http://downloads.sourceforge.net/libdc1394/%{name}-%{version}.tar.gz
+Patch0:		libdc1394-2.2.0-fix-linking.patch
 Patch1:		libdc1394-2.1.2-videodev.h.patch
 BuildRequires:	pkgconfig(libraw1394)
 BuildRequires:	pkgconfig(libusb-1.0)
@@ -52,6 +53,7 @@ This archive contains the header-files for libdc1394 development
 
 %prep
 %setup -q
+%patch0 -p0 -b .link
 %patch1 -p0 -b .v4l
 
 %build

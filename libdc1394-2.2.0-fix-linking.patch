@@ -1,0 +1,22 @@
+--- dc1394/Makefile.am.link	2012-01-22 00:35:04.000000000 +0100
++++ dc1394/Makefile.am	2012-01-22 00:40:35.000000000 +0100
+@@ -51,7 +51,7 @@
+ 	$(MACOSX_LIBADD) \
+ 	$(WINDOWS_LIBADD) \
+ 	$(USB_LIBADD) \
+-	vendor/libdc1394-vendor.la
++	vendor/libdc1394-vendor.la -lpthread
+ 
+ # headers to be installed
+ pkginclude_HEADERS =  	\
+--- dc1394/Makefile.in.link	2011-11-16 07:50:55.000000000 +0100
++++ dc1394/Makefile.in	2012-01-22 00:46:00.000000000 +0100
+@@ -335,7 +335,7 @@
+ 	$(MACOSX_LIBADD) \
+ 	$(WINDOWS_LIBADD) \
+ 	$(USB_LIBADD) \
+-	vendor/libdc1394-vendor.la
++	vendor/libdc1394-vendor.la -lpthread
+ 
+ 
+ # headers to be installed
