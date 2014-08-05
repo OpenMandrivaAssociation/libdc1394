@@ -50,7 +50,9 @@ This archive contains the header-files for libdc1394 development
 %apply_patches
 
 %build
-%configure2_5x --disable-static
+# need patch for clang
+export CC=gcc
+%configure --disable-static
 %make
 
 %install
