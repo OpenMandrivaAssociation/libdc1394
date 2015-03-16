@@ -1,11 +1,11 @@
-%define major	22
+%define major 22
 %define libname %mklibname dc1394_ %{major}
 %define devname %mklibname dc1394 -d
 
 Summary:	Library for 1394 Digital Camera Specification
 Name:		libdc1394
-Version:	2.2.1
-Release:	12
+Version:	2.2.3
+Release:	1
 License:	GPLv2+
 Group:		System/Libraries
 Url:		http://sourceforge.net/projects/libdc1394/
@@ -50,9 +50,7 @@ This archive contains the header-files for libdc1394 development
 %apply_patches
 
 %build
-# need patch for clang
-export CC=gcc
-%configure --disable-static
+%configure
 %make
 
 %install
