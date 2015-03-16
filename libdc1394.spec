@@ -15,6 +15,9 @@ Patch1:		libdc1394-2.1.2-videodev.h.patch
 BuildRequires:	pkgconfig(libraw1394)
 BuildRequires:	pkgconfig(libusb-1.0)
 BuildRequires:	pkgconfig(libv4l2)
+BuildRequires:	pkgconfig(x11)
+BuildRequires:	pkgconfig(xv)
+BuildRequires:	pkgconfig(sm)
 
 %description
 libdc1394 is a library that is intended to provide a high level programming
@@ -50,6 +53,8 @@ This archive contains the header-files for libdc1394 development
 %apply_patches
 
 %build
+# use gcc because of VLAIS
+export CC=gcc
 %configure
 %make
 
