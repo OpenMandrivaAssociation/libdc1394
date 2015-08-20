@@ -1,6 +1,7 @@
 %define major 22
 %define libname %mklibname dc1394_ %{major}
 %define devname %mklibname dc1394 -d
+%define _disable_rebuild_configure 1
 
 Summary:	Library for 1394 Digital Camera Specification
 Name:		libdc1394
