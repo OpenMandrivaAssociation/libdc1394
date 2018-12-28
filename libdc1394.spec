@@ -2,11 +2,12 @@
 %define libname %mklibname dc1394_ %{major}
 %define devname %mklibname dc1394 -d
 %define _disable_rebuild_configure 1
+%define _disable_lto 1
 
 Summary:	Library for 1394 Digital Camera Specification
 Name:		libdc1394
-Version:	2.2.3
-Release:	5
+Version:	2.2.5
+Release:	1
 License:	GPLv2+
 Group:		System/Libraries
 Url:		http://sourceforge.net/projects/libdc1394/

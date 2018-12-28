@@ -1,2 +1,4 @@
-sources:
+removed_sources:
   libdc1394-2.2.3.tar.gz: c40bdf37c64e0bce5dcc3e6e868d226e309a3a19
+sources:
+  libdc1394-2.2.5.tar.gz: dae8a3ea7d800d438d813e1a14155cced5912a29
