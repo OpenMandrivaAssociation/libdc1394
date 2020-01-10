@@ -52,7 +52,7 @@ This archive contains the header-files for libdc1394 development
 
 %prep
 %setup -q
-%apply_patches
+%autopatch -p1
 
 %build
 # use gcc because of VLAIS
