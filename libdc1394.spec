@@ -1,13 +1,14 @@
-%define major 25
-%define libname %mklibname dc1394_ %{major}
+%define major 26
+%define oldlibname %mklibname dc1394_ 25
+%define libname %mklibname dc1394
 %define devname %mklibname dc1394 -d
 %define _disable_rebuild_configure 1
 %define _disable_lto 1
 
 Summary:	Library for 1394 Digital Camera Specification
 Name:		libdc1394
-Version:	2.2.6
-Release:	4
+Version:	2.2.7
+Release:	1
 License:	GPLv2+
 Group:		System/Libraries
 Url:		http://sourceforge.net/projects/libdc1394/
@@ -20,6 +21,7 @@ BuildRequires:	pkgconfig(libv4l2)
 BuildRequires:	pkgconfig(x11)
 BuildRequires:	pkgconfig(xv)
 BuildRequires:	pkgconfig(sm)
+BuildSystem:	autotools
 
 %description
 libdc1394 is a library that is intended to provide a high level programming
@@ -31,6 +33,7 @@ http://www.1394ta.org/).
 Summary:	Dynamic library from libdc1394
 Group:		System/Libraries
 Provides:	libdc1394
+%rename %{oldlibname}
 
 %description -n %{libname}
 libdc1394 is a library that is intended to provide a high level programming
@@ -50,18 +53,9 @@ Provides:	dc1394-devel = %{version}-%{release}
 %description -n %{devname}
 This archive contains the header-files for libdc1394 development
 
-%prep
-%setup -q
-%autopatch -p1
-
-%build
+%conf -p
 # use gcc because of VLAIS
 export CC=gcc
-%configure
-%make
-
-%install
-%makeinstall_std
 
 %files -n %{libname}
 %{_libdir}/libdc1394.so.%{major}*
