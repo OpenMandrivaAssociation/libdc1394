@@ -11,7 +11,7 @@ Version:	2.2.7
 Release:	3
 License:	GPLv2+
 Group:		System/Libraries
-Url:		http://sourceforge.net/projects/libdc1394/
+Url:		https://sourceforge.net/projects/libdc1394/
 Source0:	http://downloads.sourceforge.net/libdc1394/%{name}-%{version}.tar.gz
 Patch0:		libdc1394-2.2.0-fix-linking.patch
 Patch1:		libdc1394-2.1.2-videodev.h.patch
